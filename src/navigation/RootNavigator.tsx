@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Text, View } from 'react-native';
+import { BottomTabBarProps, createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { Text, View, TouchableOpacity, StyleSheet } from 'react-native';
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import { getCurrentUser, restoreToken } from '../store/slices/authSlice';
 
@@ -28,6 +28,70 @@ import HistoryDetailsScreen from '../screens/main/HistoryDetailsScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
+
+function AppTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+  return (
+    <View style={tabBarStyles.wrap}>
+      <View style={tabBarStyles.bar}>
+        {state.routes.map((route, index) => {
+          const isFocused = state.index === index;
+          const { options } = descriptors[route.key];
+          const tabLabel =
+            typeof options.tabBarLabel === 'string'
+              ? options.tabBarLabel
+              : typeof options.title === 'string'
+              ? options.title
+              : route.name;
+
+          const iconText =
+            route.name === 'CategoriesTab'
+              ? 'H'
+              : route.name === 'Leaderboard'
+              ? 'L'
+              : route.name === 'History'
+              ? 'S'
+              : 'C';
+
+          return (
+            <TouchableOpacity
+              key={route.key}
+              accessibilityRole="button"
+              accessibilityState={isFocused ? { selected: true } : {}}
+              style={tabBarStyles.tabButton}
+              onPress={() => {
+                const event = navigation.emit({
+                  type: 'tabPress',
+                  target: route.key,
+                  canPreventDefault: true,
+                });
+
+                if (!isFocused && !event.defaultPrevented) {
+                  navigation.navigate(route.name);
+                }
+              }}
+            >
+              <View style={[tabBarStyles.iconCircle, isFocused ? tabBarStyles.iconCircleActive : null]}>
+                <Text style={[tabBarStyles.iconText, isFocused ? tabBarStyles.iconTextActive : null]}>
+                  {iconText}
+                </Text>
+              </View>
+              <Text style={[tabBarStyles.tabText, isFocused ? tabBarStyles.tabTextActive : null]}>
+                {tabLabel}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+
+        <TouchableOpacity
+          style={tabBarStyles.centerPlusButton}
+          onPress={() => navigation.navigate('CategoriesTab')}
+        >
+          <Text style={tabBarStyles.centerPlusText}>+</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
 
 function AuthNavigator() {
   return (
@@ -118,68 +182,125 @@ function HistoryNavigator() {
 function MainNavigator() {
   return (
     <Tab.Navigator
+      tabBar={(props) => <AppTabBar {...props} />}
       screenOptions={{
-        tabBarActiveTintColor: '#3b82f6',
-        tabBarInactiveTintColor: '#94a3b8',
-        headerStyle: {
-          backgroundColor: '#1e293b',
-        },
-        headerTintColor: '#fff',
-        headerTitleStyle: {
-          fontWeight: 'bold',
-        },
+        headerShown: false,
       }}
     >
       <Tab.Screen
         name="CategoriesTab"
         component={CategoriesNavigator}
         options={{
-          title: 'Quizzes',
-          tabBarLabel: 'Quizzes',
-          tabBarIcon: ({ color, size }) => (
-            <Text style={{ fontSize: size, color }}>❓</Text>
-          ),
-          headerShown: false,
+          title: 'Home',
+          tabBarLabel: 'Home',
         }}
       />
       <Tab.Screen
         name="Leaderboard"
         component={LeaderboardScreen}
         options={{
-          title: 'Leaderboard',
-          tabBarLabel: 'Leaderboard',
-          tabBarIcon: ({ color, size }) => (
-            <Text style={{ fontSize: size, color }}>🏆</Text>
-          ),
-          headerShown: false,
+          title: 'Library',
+          tabBarLabel: 'Library',
         }}
       />
       <Tab.Screen
         name="History"
         component={HistoryNavigator}
         options={{
-          title: 'History',
-          tabBarLabel: 'History',
-          tabBarIcon: ({ color, size }) => (
-            <Text style={{ fontSize: size, color }}>📊</Text>
-          ),
-          headerShown: false,
+          title: 'Share & Earn',
+          tabBarLabel: 'Share & Earn',
         }}
       />
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
         options={{
-          title: 'Profile',
-          tabBarLabel: 'Profile',
-          tabBarIcon: ({ color, size }) => (
-            <Text style={{ fontSize: size, color }}>👤</Text>
-          ),
+          title: 'Chat',
+          tabBarLabel: 'Chat',
         }}
       />
     </Tab.Navigator>
   );
 }
+
+const tabBarStyles = StyleSheet.create({
+  wrap: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: 12,
+    paddingBottom: 10,
+    backgroundColor: 'transparent',
+  },
+  bar: {
+    minHeight: 86,
+    borderRadius: 26,
+    backgroundColor: '#5b45f6',
+    borderWidth: 1,
+    borderColor: '#6f5df7',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    paddingHorizontal: 6,
+    paddingBottom: 8,
+    paddingTop: 12,
+  },
+  tabButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
+  iconCircle: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  iconCircleActive: {
+    backgroundColor: '#ff7a14',
+  },
+  iconText: {
+    color: '#374151',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  iconTextActive: {
+    color: '#ffffff',
+  },
+  tabText: {
+    color: '#ddd6fe',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  tabTextActive: {
+    color: '#ffffff',
+    fontWeight: '700',
+  },
+  centerPlusButton: {
+    position: 'absolute',
+    alignSelf: 'center',
+    top: -22,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#5b45f6',
+    borderWidth: 4,
+    borderColor: '#edf1fb',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  centerPlusText: {
+    color: '#ffffff',
+    fontSize: 30,
+    fontWeight: '700',
+    lineHeight: 30,
+    marginTop: -2,
+  },
+});
 
 export function RootNavigator() {
   const dispatch = useAppDispatch();

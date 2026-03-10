@@ -14,6 +14,12 @@ import {
 import { useAppDispatch, useAppSelector } from '../../hooks/redux';
 import { login } from '../../store/slices/authSlice';
 
+const PURPLE = '#5b45f6';
+const DARK_BG = '#0f2f67';
+const CARD_BG = '#24155f';
+const INPUT_BG = '#2b1f74';
+const ORANGE = '#ff7a14';
+
 export default function LoginScreen({ navigation }: any) {
   const [email, setEmail] = useState('john@example.com');
   const [password, setPassword] = useState('password');
@@ -39,22 +45,23 @@ export default function LoginScreen({ navigation }: any) {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.headerBackground} />
+      <View style={styles.headerCurve} />
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.headerRow}>
           <TouchableOpacity style={styles.backCircle} onPress={() => navigation.goBack()}>
             <Text style={styles.backText}>{'<'}</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Sign in</Text>
+          <Text style={styles.headerTitle}>Sign In</Text>
         </View>
 
         <View style={styles.card}>
           <View style={styles.tabs}>
             <TouchableOpacity style={styles.tabActive}>
-              <Text style={styles.tabActiveText}>Sign in</Text>
+              <Text style={styles.tabActiveText}>Sign In</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.tabInactive} onPress={() => navigation.replace('Register')}>
-              <Text style={styles.tabInactiveText}>Sign up</Text>
+              <Text style={styles.tabInactiveText}>Sign Up</Text>
             </TouchableOpacity>
           </View>
 
@@ -64,14 +71,14 @@ export default function LoginScreen({ navigation }: any) {
               <TextInput
                 style={styles.input}
                 placeholder="Enter Email"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor="#9ea0be"
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 editable={!loading}
               />
-              <Text style={styles.inputIcon}>@</Text>
+              <Text style={styles.inputIcon}>M</Text>
             </View>
           </View>
 
@@ -80,8 +87,8 @@ export default function LoginScreen({ navigation }: any) {
             <View style={styles.inputWrap}>
               <TextInput
                 style={styles.input}
-                placeholder="Enter Password"
-                placeholderTextColor="#9ca3af"
+                placeholder="*******"
+                placeholderTextColor="#9ea0be"
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
@@ -92,102 +99,110 @@ export default function LoginScreen({ navigation }: any) {
           </View>
 
           <TouchableOpacity style={styles.forgotWrap} onPress={() => navigation.navigate('ForgotPassword')}>
-            <Text style={styles.forgotText}>Forgot Password?</Text>
+            <Text style={styles.forgotText}>Forgot password?</Text>
           </TouchableOpacity>
 
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
-          <View style={styles.dividerRow}>
-            <View style={styles.divider} />
-            <Text style={styles.dividerText}>Or Continue With</Text>
-            <View style={styles.divider} />
-          </View>
-
-          <TouchableOpacity style={styles.socialButton} onPress={() => Alert.alert('Info', 'Google login coming soon')}>
-            <Text style={styles.socialIcon}>G</Text>
-            <Text style={styles.socialText}>Continue with</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.socialButton} onPress={() => Alert.alert('Info', 'Apple login coming soon')}>
-            <Text style={styles.socialIcon}>A</Text>
-            <Text style={styles.socialText}>Continue with</Text>
-          </TouchableOpacity>
-
-          <View style={styles.bottomLine}>
-            <Text style={styles.bottomText}>Don't have an account? </Text>
-            <TouchableOpacity onPress={() => navigation.replace('Register')}>
-              <Text style={styles.bottomLink}>Sign Up</Text>
-            </TouchableOpacity>
-            <Text style={styles.bottomText}> here</Text>
-          </View>
         </View>
 
-        <TouchableOpacity style={[styles.primaryButton, loading ? styles.buttonDisabled : null]} onPress={handleLogin} disabled={loading}>
-          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryButtonText}>Sign in</Text>}
+        <TouchableOpacity
+          style={[styles.primaryButton, loading ? styles.buttonDisabled : null]}
+          onPress={handleLogin}
+          disabled={loading}
+        >
+          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryButtonText}>Sign In</Text>}
         </TouchableOpacity>
+
+        <View style={styles.dividerRow}>
+          <View style={styles.divider} />
+          <Text style={styles.dividerText}>Or Continue With</Text>
+          <View style={styles.divider} />
+        </View>
+
+        <TouchableOpacity style={styles.socialButton} onPress={() => Alert.alert('Info', 'Google login coming soon')}>
+          <Text style={styles.socialIcon}>G</Text>
+          <Text style={styles.socialText}>Google</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.socialButton} onPress={() => Alert.alert('Info', 'Apple login coming soon')}>
+          <Text style={styles.socialIcon}>A</Text>
+          <Text style={styles.socialText}>Apple</Text>
+        </TouchableOpacity>
+
+        <View style={styles.bottomLine}>
+          <Text style={styles.bottomText}>Don't have an account? </Text>
+          <TouchableOpacity onPress={() => navigation.replace('Register')}>
+            <Text style={styles.bottomLink}>Sign Up</Text>
+          </TouchableOpacity>
+          <Text style={styles.bottomText}> here</Text>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
-const PURPLE = '#5b45f6';
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ececf8',
+    backgroundColor: DARK_BG,
   },
   headerBackground: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    height: 260,
+    height: 250,
     backgroundColor: PURPLE,
-    borderBottomLeftRadius: 36,
-    borderBottomRightRadius: 36,
+  },
+  headerCurve: {
+    position: 'absolute',
+    top: 200,
+    left: -120,
+    right: -120,
+    height: 140,
+    backgroundColor: DARK_BG,
+    borderTopLeftRadius: 240,
+    borderTopRightRadius: 240,
   },
   scrollContent: {
     paddingHorizontal: 20,
     paddingTop: 54,
-    paddingBottom: 24,
+    paddingBottom: 26,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 86,
   },
   backCircle: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
   backText: {
-    fontSize: 24,
+    fontSize: 22,
     color: '#374151',
     marginTop: -2,
   },
   headerTitle: {
     color: '#fff',
-    fontSize: 36 / 2,
+    fontSize: 46 / 2,
     fontWeight: '800',
   },
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 18,
+    backgroundColor: CARD_BG,
+    borderRadius: 16,
     padding: 18,
-    borderWidth: 1,
-    borderColor: '#d1d5db',
     marginBottom: 20,
   },
   tabs: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: '#d1d5db',
+    borderBottomColor: '#7b7ca1',
     marginBottom: 18,
   },
   tabActive: {
@@ -195,7 +210,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: 10,
     borderBottomWidth: 2,
-    borderBottomColor: PURPLE,
+    borderBottomColor: ORANGE,
   },
   tabInactive: {
     flex: 1,
@@ -203,29 +218,28 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   tabActiveText: {
-    color: PURPLE,
-    fontSize: 34 / 2,
+    color: ORANGE,
+    fontSize: 19,
     fontWeight: '700',
   },
   tabInactiveText: {
-    color: '#9ca3af',
-    fontSize: 34 / 2,
+    color: '#8a8cb0',
+    fontSize: 19,
     fontWeight: '700',
   },
   fieldGroup: {
     marginBottom: 14,
   },
   label: {
-    fontSize: 15,
-    color: '#111827',
+    fontSize: 20 / 1.1,
+    color: '#ffffff',
     fontWeight: '700',
     marginBottom: 8,
   },
   inputWrap: {
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 10,
-    minHeight: 48,
+    borderRadius: 12,
+    minHeight: 50,
+    backgroundColor: INPUT_BG,
     flexDirection: 'row',
     alignItems: 'center',
     paddingRight: 14,
@@ -233,48 +247,64 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     paddingHorizontal: 12,
-    color: '#111827',
-    fontSize: 14,
+    color: '#ffffff',
+    fontSize: 17 / 1.1,
   },
   inputIcon: {
-    color: '#9ca3af',
+    color: '#d1d5db',
     fontSize: 16,
+    fontWeight: '700',
   },
   forgotWrap: {
     alignItems: 'flex-end',
-    marginBottom: 14,
+    marginTop: 2,
   },
   forgotText: {
-    color: PURPLE,
+    color: ORANGE,
     fontWeight: '700',
-    fontSize: 26 / 2,
+    fontSize: 34 / 2,
   },
   errorText: {
-    color: '#dc2626',
-    marginBottom: 12,
+    color: '#fca5a5',
+    marginTop: 12,
     fontSize: 13,
     fontWeight: '600',
+  },
+  primaryButton: {
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: ORANGE,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 18,
+  },
+  primaryButtonText: {
+    color: '#111827',
+    fontSize: 20 / 1.1,
+    fontWeight: '800',
+  },
+  buttonDisabled: {
+    opacity: 0.75,
   },
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 14,
   },
   divider: {
     flex: 1,
     height: 1,
-    backgroundColor: '#e5e7eb',
+    backgroundColor: '#54597e',
   },
   dividerText: {
-    marginHorizontal: 8,
-    color: '#4b5563',
-    fontSize: 15,
+    marginHorizontal: 10,
+    color: '#e5e7eb',
+    fontSize: 16 / 1.1,
   },
   socialButton: {
-    borderWidth: 1,
-    borderColor: '#d1d5db',
+    backgroundColor: '#2a1a76',
     borderRadius: 24,
-    minHeight: 48,
+    minHeight: 50,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -282,40 +312,27 @@ const styles = StyleSheet.create({
   },
   socialIcon: {
     marginRight: 10,
+    color: '#ffffff',
     fontSize: 18,
+    fontWeight: '800',
   },
   socialText: {
-    color: '#1f2937',
-    fontSize: 16,
+    color: '#ffffff',
+    fontSize: 18 / 1.1,
     fontWeight: '700',
   },
   bottomLine: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 4,
+    marginTop: 6,
   },
   bottomText: {
-    color: '#374151',
-    fontSize: 14,
+    color: '#ffffff',
+    fontSize: 16 / 1.1,
   },
   bottomLink: {
-    color: PURPLE,
-    fontSize: 14,
+    color: ORANGE,
+    fontSize: 16 / 1.1,
     fontWeight: '700',
-  },
-  primaryButton: {
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: PURPLE,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  primaryButtonText: {
-    color: '#fff',
-    fontSize: 18 / 2,
-    fontWeight: '700',
-  },
-  buttonDisabled: {
-    opacity: 0.75,
   },
 });

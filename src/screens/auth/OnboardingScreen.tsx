@@ -8,16 +8,17 @@ const slides = [
   },
   {
     title: 'Win Rewards Galore',
-    subtitle: 'Compete with friends, top leaderboards, and unlock badges.',
+    subtitle: 'Find fun and interesting quizzes to boost up your knowledge',
   },
 ];
 
 export default function OnboardingScreen({ navigation }: any) {
   const [index, setIndex] = useState(0);
   const slide = useMemo(() => slides[index], [index]);
+  const isLast = index === slides.length - 1;
 
-  const goNext = () => {
-    if (index >= slides.length - 1) {
+  const handleNext = () => {
+    if (isLast) {
       navigation.replace('Login');
       return;
     }
@@ -35,14 +36,14 @@ export default function OnboardingScreen({ navigation }: any) {
         <View style={[styles.avatar, styles.avatarC]}><Text style={styles.avatarText}>C</Text></View>
         <View style={[styles.avatar, styles.avatarD]}><Text style={styles.avatarText}>D</Text></View>
 
-        <View style={[styles.badge, styles.badgeOne]}><Text>S</Text></View>
-        <View style={[styles.badge, styles.badgeTwo]}><Text>L</Text></View>
-        <View style={[styles.badge, styles.badgeThree]}><Text>C</Text></View>
-        <View style={[styles.badge, styles.badgeFour]}><Text>F</Text></View>
+        <View style={[styles.badge, styles.badgeOne]}><Text style={styles.badgeText}>S</Text></View>
+        <View style={[styles.badge, styles.badgeTwo]}><Text style={styles.badgeText}>L</Text></View>
+        <View style={[styles.badge, styles.badgeThree]}><Text style={styles.badgeText}>C</Text></View>
+        <View style={[styles.badge, styles.badgeFour]}><Text style={styles.badgeText}>F</Text></View>
       </View>
 
       <View style={styles.content}>
-        <Text style={styles.spark}>*</Text>
+        <Text style={styles.spark}>***</Text>
         <Text style={styles.title}>{slide.title}</Text>
         <Text style={styles.subtitle}>{slide.subtitle}</Text>
 
@@ -58,8 +59,11 @@ export default function OnboardingScreen({ navigation }: any) {
           <Text style={styles.skipText}>Skip</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.nextButton} onPress={goNext}>
-          <Text style={styles.nextText}>{'>'}</Text>
+        <TouchableOpacity
+          style={[styles.nextButton, isLast ? styles.nextButtonWide : null]}
+          onPress={handleNext}
+        >
+          <Text style={styles.nextText}>{isLast ? 'Get Started' : '>'}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -69,45 +73,45 @@ export default function OnboardingScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f4f4ff',
+    backgroundColor: '#f2f2f5',
   },
   topGraphic: {
-    height: 360,
+    height: 356,
     overflow: 'hidden',
-    backgroundColor: '#eef2ff',
-    borderBottomLeftRadius: 48,
-    borderBottomRightRadius: 48,
+    backgroundColor: '#f4f6ff',
   },
   planet: {
     position: 'absolute',
-    width: 420,
-    height: 420,
-    borderRadius: 210,
-    backgroundColor: '#7c6af5',
-    top: -300,
+    width: 430,
+    height: 430,
+    borderRadius: 215,
+    backgroundColor: '#7b66f5',
+    top: -298,
     alignSelf: 'center',
     borderWidth: 36,
-    borderColor: '#a5b4fc',
+    borderColor: '#9aaaf0',
   },
   avatar: {
     position: 'absolute',
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    backgroundColor: '#dbeafe',
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: '#d5e9ff',
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarText: {
-    fontSize: 34,
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#1f2937',
   },
   avatarA: {
-    left: 54,
+    left: 52,
     top: 88,
   },
   avatarB: {
-    left: 24,
-    top: 188,
+    left: 14,
+    top: 190,
   },
   avatarC: {
     right: 56,
@@ -124,11 +128,17 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  badgeText: {
+    color: '#4b5563',
+    fontWeight: '700',
   },
   badgeOne: {
     top: 102,
-    left: 16,
+    left: 12,
   },
   badgeTwo: {
     top: 160,
@@ -136,35 +146,36 @@ const styles = StyleSheet.create({
   },
   badgeThree: {
     top: 218,
-    left: 96,
+    left: 98,
   },
   badgeFour: {
     top: 210,
-    right: 26,
+    right: 20,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 30,
-    paddingTop: 32,
+    paddingHorizontal: 36,
+    paddingTop: 22,
     alignItems: 'center',
   },
   spark: {
     alignSelf: 'flex-start',
-    color: '#fb923c',
-    fontSize: 26,
+    color: '#f97316',
+    fontSize: 22,
     marginBottom: 10,
+    fontWeight: '800',
   },
   title: {
-    fontSize: 44 / 2,
+    fontSize: 50 / 2,
     fontWeight: '800',
-    color: '#16181d',
+    color: '#0f172a',
     marginBottom: 14,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 15,
-    color: '#4b5563',
-    lineHeight: 24,
+    color: '#374151',
+    lineHeight: 30 / 1.2,
     textAlign: 'center',
     maxWidth: 320,
   },
@@ -173,39 +184,45 @@ const styles = StyleSheet.create({
     marginTop: 28,
   },
   dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#d1d5db',
-    marginHorizontal: 4,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#fbc0c6',
+    marginHorizontal: 7,
   },
   dotActive: {
-    width: 18,
-    backgroundColor: '#5b45f6',
+    width: 34,
+    borderRadius: 7,
+    backgroundColor: '#f66f7a',
   },
   footer: {
-    paddingHorizontal: 30,
-    paddingBottom: 28,
+    paddingHorizontal: 36,
+    paddingBottom: 32,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   skipText: {
-    color: '#5b45f6',
-    fontSize: 26 / 2,
+    color: '#f97316',
+    fontSize: 32 / 2,
     fontWeight: '700',
   },
   nextButton: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
+    width: 92,
+    height: 92,
+    borderRadius: 46,
     backgroundColor: '#5b45f6',
     alignItems: 'center',
     justifyContent: 'center',
   },
+  nextButtonWide: {
+    width: 196,
+    height: 80,
+    borderRadius: 40,
+  },
   nextText: {
-    color: '#fff',
-    fontSize: 28,
-    marginTop: -2,
+    color: '#ffffff',
+    fontSize: 36 / 2,
+    fontWeight: '700',
   },
 });

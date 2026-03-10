@@ -15,6 +15,10 @@ import { useAppDispatch, useAppSelector } from '../../hooks/redux';
 import { register } from '../../store/slices/authSlice';
 
 const PURPLE = '#5b45f6';
+const DARK_BG = '#0f2f67';
+const CARD_BG = '#24155f';
+const INPUT_BG = '#2b1f74';
+const ORANGE = '#ff7a14';
 
 export default function RegisterScreen({ navigation }: any) {
   const dispatch = useAppDispatch();
@@ -24,8 +28,8 @@ export default function RegisterScreen({ navigation }: any) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [gender, setGender] = useState<'male' | 'female' | ''>('male');
-  const [acceptedTerms, setAcceptedTerms] = useState(true);
+  const [gender, setGender] = useState<'male' | 'female'>('male');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const handleRegister = async () => {
     if (!firstName || !email || !password || !confirmPassword) {
@@ -69,22 +73,23 @@ export default function RegisterScreen({ navigation }: any) {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.headerBackground} />
+      <View style={styles.headerCurve} />
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.headerRow}>
           <TouchableOpacity style={styles.backCircle} onPress={() => navigation.goBack()}>
             <Text style={styles.backText}>{'<'}</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Create account</Text>
+          <Text style={styles.headerTitle}>Create Account</Text>
         </View>
 
         <View style={styles.card}>
           <View style={styles.tabs}>
             <TouchableOpacity style={styles.tabInactive} onPress={() => navigation.replace('Login')}>
-              <Text style={styles.tabInactiveText}>Sign in</Text>
+              <Text style={styles.tabInactiveText}>Sign In</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.tabActive}>
-              <Text style={styles.tabActiveText}>Sign up</Text>
+              <Text style={styles.tabActiveText}>Sign Up</Text>
             </TouchableOpacity>
           </View>
 
@@ -93,11 +98,10 @@ export default function RegisterScreen({ navigation }: any) {
             <View style={styles.inputWrap}>
               <TextInput
                 style={styles.input}
-                placeholder="Enter Name"
-                placeholderTextColor="#9ca3af"
+                placeholder="Enter First Name"
+                placeholderTextColor="#9ea0be"
                 value={firstName}
                 onChangeText={setFirstName}
-                editable={!loading}
               />
               <Text style={styles.inputIcon}>U</Text>
             </View>
@@ -109,14 +113,13 @@ export default function RegisterScreen({ navigation }: any) {
               <TextInput
                 style={styles.input}
                 placeholder="Enter Email"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor="#9ea0be"
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
                 autoCapitalize="none"
-                editable={!loading}
               />
-              <Text style={styles.inputIcon}>v</Text>
+              <Text style={styles.inputIcon}>M</Text>
             </View>
           </View>
 
@@ -125,12 +128,11 @@ export default function RegisterScreen({ navigation }: any) {
             <View style={styles.inputWrap}>
               <TextInput
                 style={styles.input}
-                placeholder="Enter Password"
-                placeholderTextColor="#9ca3af"
+                placeholder="*******"
+                placeholderTextColor="#9ea0be"
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
-                editable={!loading}
               />
               <Text style={styles.inputIcon}>O</Text>
             </View>
@@ -141,65 +143,80 @@ export default function RegisterScreen({ navigation }: any) {
             <View style={styles.inputWrap}>
               <TextInput
                 style={styles.input}
-                placeholder="*Str0ngP@ss!"
-                placeholderTextColor="#9ca3af"
+                placeholder="*******"
+                placeholderTextColor="#9ea0be"
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 secureTextEntry
-                editable={!loading}
               />
               <Text style={styles.inputIcon}>O</Text>
             </View>
           </View>
 
-          <Text style={styles.label}>Choose Gender</Text>
+          <Text style={styles.labelLight}>Choose Gender</Text>
           <View style={styles.genderRow}>
             <TouchableOpacity
-              style={[styles.genderButton, gender === 'male' ? styles.genderActive : null]}
+              style={[styles.genderButton, gender === 'male' ? styles.genderButtonActive : null]}
               onPress={() => setGender('male')}
             >
-              <Text style={styles.genderCheck}>{gender === 'male' ? 'v' : ''}</Text>
+              <View style={[styles.radioCircle, gender === 'male' ? styles.radioCircleActive : null]}>
+                <Text style={styles.radioMark}>{gender === 'male' ? 'v' : ''}</Text>
+              </View>
               <Text style={[styles.genderText, gender === 'male' ? styles.genderTextActive : null]}>Male</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.genderButton, gender === 'female' ? styles.genderActive : null]}
+              style={[styles.genderButton, gender === 'female' ? styles.genderButtonActive : null]}
               onPress={() => setGender('female')}
             >
-              <Text style={styles.genderCheck}>{gender === 'female' ? 'v' : ''}</Text>
+              <View style={[styles.radioCircle, gender === 'female' ? styles.radioCircleActive : null]}>
+                <Text style={styles.radioMark}>{gender === 'female' ? 'v' : ''}</Text>
+              </View>
               <Text style={[styles.genderText, gender === 'female' ? styles.genderTextActive : null]}>Female</Text>
             </TouchableOpacity>
           </View>
 
           <TouchableOpacity style={styles.termsRow} onPress={() => setAcceptedTerms((prev) => !prev)}>
-            <View style={[styles.checkbox, acceptedTerms ? styles.checkboxActive : null]}>
-              <Text style={styles.checkboxText}>{acceptedTerms ? 'v' : ''}</Text>
+            <View style={[styles.radioCircle, acceptedTerms ? styles.radioCircleActive : null]}>
+              <Text style={styles.radioMark}>{acceptedTerms ? 'v' : ''}</Text>
             </View>
             <Text style={styles.termsText}>I accept to all Term, Privacy and Fees</Text>
           </TouchableOpacity>
 
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
-          <View style={styles.dividerRow}>
-            <View style={styles.divider} />
-            <Text style={styles.dividerText}>Or Continue With</Text>
-            <View style={styles.divider} />
-          </View>
-
-          <TouchableOpacity style={styles.socialButton} onPress={() => Alert.alert('Info', 'Google login coming soon')}>
-            <Text style={styles.socialIcon}>G</Text>
-            <Text style={styles.socialText}>Continue with</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.socialButton} onPress={() => Alert.alert('Info', 'Apple login coming soon')}>
-            <Text style={styles.socialIcon}>A</Text>
-            <Text style={styles.socialText}>Continue with</Text>
-          </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={[styles.primaryButton, loading ? styles.buttonDisabled : null]} onPress={handleRegister} disabled={loading}>
-          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryButtonText}>Create Account</Text>}
+        <TouchableOpacity
+          style={[styles.primaryButton, loading ? styles.buttonDisabled : null]}
+          onPress={handleRegister}
+          disabled={loading}
+        >
+          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryButtonText}>Sign Up</Text>}
         </TouchableOpacity>
+
+        <View style={styles.dividerRow}>
+          <View style={styles.divider} />
+          <Text style={styles.dividerText}>Or Continue With</Text>
+          <View style={styles.divider} />
+        </View>
+
+        <TouchableOpacity style={styles.socialButton} onPress={() => Alert.alert('Info', 'Google login coming soon')}>
+          <Text style={styles.socialIcon}>G</Text>
+          <Text style={styles.socialText}>Continue With</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.socialButton} onPress={() => Alert.alert('Info', 'Apple login coming soon')}>
+          <Text style={styles.socialIcon}>A</Text>
+          <Text style={styles.socialText}>Continue With</Text>
+        </TouchableOpacity>
+
+        <View style={styles.bottomLine}>
+          <Text style={styles.bottomText}>Already have an account? </Text>
+          <TouchableOpacity onPress={() => navigation.replace('Login')}>
+            <Text style={styles.bottomLink}>Sign In</Text>
+          </TouchableOpacity>
+          <Text style={styles.bottomText}> here</Text>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -208,59 +225,65 @@ export default function RegisterScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ececf8',
+    backgroundColor: DARK_BG,
   },
   headerBackground: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    height: 260,
+    height: 250,
     backgroundColor: PURPLE,
-    borderBottomLeftRadius: 36,
-    borderBottomRightRadius: 36,
+  },
+  headerCurve: {
+    position: 'absolute',
+    top: 200,
+    left: -120,
+    right: -120,
+    height: 140,
+    backgroundColor: DARK_BG,
+    borderTopLeftRadius: 240,
+    borderTopRightRadius: 240,
   },
   scrollContent: {
     paddingHorizontal: 20,
     paddingTop: 54,
-    paddingBottom: 24,
+    paddingBottom: 26,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 84,
   },
   backCircle: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
   backText: {
-    fontSize: 24,
+    fontSize: 22,
     color: '#374151',
     marginTop: -2,
   },
   headerTitle: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 46 / 2,
     fontWeight: '800',
   },
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 18,
+    backgroundColor: CARD_BG,
+    borderRadius: 16,
     padding: 18,
-    borderWidth: 1,
-    borderColor: '#d1d5db',
     marginBottom: 20,
   },
   tabs: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: '#d1d5db',
+    borderBottomColor: '#7b7ca1',
     marginBottom: 18,
   },
   tabActive: {
@@ -268,7 +291,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: 10,
     borderBottomWidth: 2,
-    borderBottomColor: PURPLE,
+    borderBottomColor: ORANGE,
   },
   tabInactive: {
     flex: 1,
@@ -276,29 +299,33 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   tabActiveText: {
-    color: PURPLE,
-    fontSize: 17,
+    color: ORANGE,
+    fontSize: 19,
     fontWeight: '700',
   },
   tabInactiveText: {
-    color: '#9ca3af',
-    fontSize: 17,
+    color: '#8a8cb0',
+    fontSize: 19,
     fontWeight: '700',
   },
   fieldGroup: {
-    marginBottom: 12,
+    marginBottom: 14,
   },
   label: {
-    fontSize: 15,
-    color: '#111827',
+    fontSize: 20 / 1.1,
+    color: '#ffffff',
     fontWeight: '700',
     marginBottom: 8,
   },
+  labelLight: {
+    fontSize: 34 / 2,
+    color: '#ffffff',
+    marginBottom: 10,
+  },
   inputWrap: {
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 10,
-    minHeight: 48,
+    borderRadius: 12,
+    minHeight: 50,
+    backgroundColor: INPUT_BG,
     flexDirection: 'row',
     alignItems: 'center',
     paddingRight: 14,
@@ -306,110 +333,111 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     paddingHorizontal: 12,
-    color: '#111827',
-    fontSize: 14,
+    color: '#ffffff',
+    fontSize: 17 / 1.1,
   },
   inputIcon: {
-    color: '#9ca3af',
+    color: '#d1d5db',
     fontSize: 16,
+    fontWeight: '700',
   },
   genderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 14,
+    marginBottom: 12,
   },
   genderButton: {
     width: '48%',
+    minHeight: 56,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 9,
-    minHeight: 42,
+    borderColor: '#7b7ca1',
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    paddingHorizontal: 14,
   },
-  genderActive: {
-    borderColor: PURPLE,
-    backgroundColor: '#f0edff',
+  genderButtonActive: {
+    borderColor: '#b7aedf',
   },
-  genderCheck: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+  radioCircle: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
     borderWidth: 1,
-    borderColor: '#c4b5fd',
-    textAlign: 'center',
-    color: '#fff',
-    backgroundColor: PURPLE,
-    overflow: 'hidden',
-    fontWeight: '700',
-    lineHeight: 18,
+    borderColor: '#7b7ca1',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginRight: 8,
   },
+  radioCircleActive: {
+    backgroundColor: ORANGE,
+    borderColor: ORANGE,
+  },
+  radioMark: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '800',
+    lineHeight: 10,
+  },
   genderText: {
-    color: '#6b7280',
-    fontSize: 14,
+    color: '#8a8cb0',
+    fontSize: 36 / 2,
   },
   genderTextActive: {
-    color: '#4338ca',
+    color: '#d1d5db',
     fontWeight: '700',
   },
   termsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 14,
-  },
-  checkbox: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-    marginRight: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#fff',
-  },
-  checkboxActive: {
-    backgroundColor: PURPLE,
-    borderColor: PURPLE,
-  },
-  checkboxText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 12,
+    marginBottom: 4,
   },
   termsText: {
-    color: '#374151',
-    fontSize: 14,
-    fontWeight: '500',
+    color: '#ffffff',
+    fontSize: 34 / 2,
+    flex: 1,
   },
   errorText: {
-    color: '#dc2626',
-    marginBottom: 12,
+    color: '#fca5a5',
+    marginTop: 12,
     fontSize: 13,
     fontWeight: '600',
+  },
+  primaryButton: {
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: ORANGE,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 18,
+  },
+  primaryButtonText: {
+    color: '#111827',
+    fontSize: 20 / 1.1,
+    fontWeight: '800',
+  },
+  buttonDisabled: {
+    opacity: 0.75,
   },
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 14,
   },
   divider: {
     flex: 1,
     height: 1,
-    backgroundColor: '#e5e7eb',
+    backgroundColor: '#54597e',
   },
   dividerText: {
-    marginHorizontal: 8,
-    color: '#4b5563',
-    fontSize: 15,
+    marginHorizontal: 10,
+    color: '#e5e7eb',
+    fontSize: 16 / 1.1,
   },
   socialButton: {
-    borderWidth: 1,
-    borderColor: '#d1d5db',
+    backgroundColor: '#2a1a76',
     borderRadius: 24,
-    minHeight: 48,
+    minHeight: 50,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -417,26 +445,27 @@ const styles = StyleSheet.create({
   },
   socialIcon: {
     marginRight: 10,
+    color: '#ffffff',
     fontSize: 18,
+    fontWeight: '800',
   },
   socialText: {
-    color: '#1f2937',
-    fontSize: 16,
+    color: '#ffffff',
+    fontSize: 18 / 1.1,
     fontWeight: '700',
   },
-  primaryButton: {
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: PURPLE,
-    alignItems: 'center',
+  bottomLine: {
+    flexDirection: 'row',
     justifyContent: 'center',
+    marginTop: 6,
   },
-  primaryButtonText: {
-    color: '#fff',
-    fontSize: 16,
+  bottomText: {
+    color: '#ffffff',
+    fontSize: 16 / 1.1,
+  },
+  bottomLink: {
+    color: ORANGE,
+    fontSize: 16 / 1.1,
     fontWeight: '700',
-  },
-  buttonDisabled: {
-    opacity: 0.75,
   },
 });

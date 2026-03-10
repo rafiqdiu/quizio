@@ -6,11 +6,10 @@ import {
   StyleSheet,
   ActivityIndicator,
   TouchableOpacity,
+  TextInput,
 } from 'react-native';
 import { useAppDispatch, useAppSelector } from '../../hooks/redux';
 import { fetchLeaderboard } from '../../store/slices/leaderboardSlice';
-
-type RangeFilter = 'today' | 'weekly' | 'all';
 
 function getInitials(name: string) {
   const safe = String(name || '').trim();
@@ -24,60 +23,73 @@ function getInitials(name: string) {
   return `${parts[0].slice(0, 1)}${parts[1].slice(0, 1)}`.toUpperCase();
 }
 
-function TopUserCard({ user, place }: { user: any; place: 1 | 2 | 3 }) {
-  if (!user) {
-    return <View style={[styles.topCard, place === 1 ? styles.topCardCenter : styles.topCardSide]} />;
-  }
-
-  return (
-    <View style={[styles.topCard, place === 1 ? styles.topCardCenter : styles.topCardSide]}>
-      <View style={[styles.avatarRing, place === 1 ? styles.avatarRingFirst : null]}>
-        <View style={styles.avatarInner}>
-          <Text style={styles.avatarInitial}>{getInitials(user.name)}</Text>
-        </View>
-      </View>
-      <View style={[styles.badgeRank, place === 1 ? styles.badgeRankFirst : null]}>
-        <Text style={styles.badgeRankText}>{place}</Text>
-      </View>
-      <Text style={styles.topName} numberOfLines={1}>{user.name}</Text>
-      <View style={[styles.topScorePill, place === 1 ? styles.topScoreFirst : place === 2 ? styles.topScoreSecond : styles.topScoreThird]}>
-        <Text style={styles.topScoreText}>D {user.total_score}</Text>
-      </View>
-    </View>
-  );
+function toHandle(name: string) {
+  const base = String(name || 'member').toLowerCase().replace(/[^a-z0-9]+/g, '_');
+  return `@${base}`;
 }
 
-export default function LeaderboardScreen() {
+export default function LeaderboardScreen({ navigation }: any) {
   const dispatch = useAppDispatch();
   const { entries, loading } = useAppSelector((state) => state.leaderboard);
-  const [range, setRange] = useState<RangeFilter>('today');
+
+  const [query, setQuery] = useState('');
+  const [showFollowingOnly, setShowFollowingOnly] = useState(false);
+  const [followingById, setFollowingById] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     dispatch(fetchLeaderboard());
   }, [dispatch]);
 
-  const filteredEntries = useMemo(() => {
-    const sorted = [...entries].sort((a, b) => a.rank - b.rank);
-
-    if (range === 'today') {
-      return sorted.slice(0, 10);
+  useEffect(() => {
+    if (!entries.length) {
+      return;
     }
 
-    if (range === 'weekly') {
-      return [...entries]
-        .sort((a, b) => b.quizzes_completed - a.quizzes_completed || a.rank - b.rank)
-        .slice(0, 10)
-        .map((entry, index) => ({
-          ...entry,
-          rank: index + 1,
-        }));
-    }
+    setFollowingById((prev) => {
+      const next = { ...prev };
+      entries.forEach((entry) => {
+        if (next[entry.id] === undefined) {
+          next[entry.id] = entry.rank % 4 === 0;
+        }
+      });
+      return next;
+    });
+  }, [entries]);
 
-    return sorted;
-  }, [entries, range]);
+  const members = useMemo(() => {
+    const normalized = query.trim().toLowerCase();
 
-  const topThree = filteredEntries.slice(0, 3);
-  const listEntries = filteredEntries.slice(3);
+    return [...entries]
+      .sort((a, b) => a.rank - b.rank)
+      .map((entry) => ({
+        ...entry,
+        handle: toHandle(entry.name),
+        isFollowing: Boolean(followingById[entry.id]),
+      }))
+      .filter((member) => {
+        const matchesQuery =
+          normalized.length === 0 ||
+          member.name.toLowerCase().includes(normalized) ||
+          member.handle.toLowerCase().includes(normalized);
+
+        if (!matchesQuery) {
+          return false;
+        }
+
+        if (showFollowingOnly && !member.isFollowing) {
+          return false;
+        }
+
+        return true;
+      });
+  }, [entries, followingById, query, showFollowingOnly]);
+
+  const toggleFollow = (id: number) => {
+    setFollowingById((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
 
   if (loading) {
     return (
@@ -89,80 +101,87 @@ export default function LeaderboardScreen() {
 
   return (
     <View style={styles.container}>
+      <View style={styles.hero}>
+        <View style={styles.heroGlow} />
+
+        <View style={styles.headerRow}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => {
+              if (navigation?.canGoBack?.()) {
+                navigation.goBack();
+                return;
+              }
+
+              navigation?.navigate?.('CategoriesTab');
+            }}
+          >
+            <Text style={styles.backText}>{'<'}</Text>
+          </TouchableOpacity>
+          <Text style={styles.title}>Top Members</Text>
+        </View>
+
+        <View style={styles.searchRow}>
+          <View style={styles.searchWrap}>
+            <Text style={styles.searchIcon}>Q</Text>
+            <TextInput
+              style={styles.searchInput}
+              value={query}
+              onChangeText={setQuery}
+              placeholder="Search members"
+              placeholderTextColor="#d6d3f4"
+            />
+          </View>
+
+          <TouchableOpacity
+            style={[styles.filterButton, showFollowingOnly ? styles.filterButtonActive : null]}
+            onPress={() => setShowFollowingOnly((prev) => !prev)}
+          >
+            <Text style={styles.filterButtonText}>{showFollowingOnly ? 'F' : 'A'}</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
       <FlatList
-        data={listEntries}
+        data={members}
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={styles.listContent}
-        ListHeaderComponent={
-          <View>
-            <View style={styles.hero}>
-              <View style={styles.heroGlow} />
-              <View style={styles.titleRow}>
-                <View style={styles.closeButton}>
-                  <Text style={styles.closeText}>x</Text>
-                </View>
-                <Text style={styles.title}>Leaderboard</Text>
-              </View>
-
-              <View style={styles.filterRow}>
-                <TouchableOpacity
-                  style={[styles.filterTab, range === 'today' ? styles.filterTabActive : null]}
-                  onPress={() => setRange('today')}
-                >
-                  <Text style={[styles.filterText, range === 'today' ? styles.filterTextActive : null]}>Today</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.filterTab, range === 'weekly' ? styles.filterTabActive : null]}
-                  onPress={() => setRange('weekly')}
-                >
-                  <Text style={[styles.filterText, range === 'weekly' ? styles.filterTextActive : null]}>Weekly</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.filterTab, range === 'all' ? styles.filterTabActive : null]}
-                  onPress={() => setRange('all')}
-                >
-                  <Text style={[styles.filterText, range === 'all' ? styles.filterTextActive : null]}>All Time</Text>
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.topThreeWrap}>
-                <TopUserCard user={topThree[1]} place={2} />
-                <TopUserCard user={topThree[0]} place={1} />
-                <TopUserCard user={topThree[2]} place={3} />
-              </View>
-            </View>
-          </View>
-        }
         renderItem={({ item, index }) => {
-          const isFirst = index === 0;
+          const featured = index === 0;
+
           return (
-            <View style={[styles.rowCard, isFirst ? styles.rowCardPrimary : null]}>
-              <View style={styles.rowRankWrap}>
-                <Text style={[styles.rowRankText, isFirst ? styles.rowRankTextPrimary : null]}>{item.rank}</Text>
+            <View style={[styles.memberRow, featured ? styles.memberRowFeatured : null]}>
+              <View style={styles.avatarWrap}>
+                <View style={styles.avatarInner}>
+                  <Text style={styles.avatarText}>{getInitials(item.name)}</Text>
+                </View>
               </View>
 
-              <View style={styles.rowAvatar}>
-                <Text style={styles.rowAvatarInitial}>{getInitials(item.name)}</Text>
+              <View style={styles.memberTextWrap}>
+                <View style={styles.nameRow}>
+                  <Text style={styles.memberName} numberOfLines={1}>{item.name}</Text>
+                  <View style={styles.verifiedDot}>
+                    <Text style={styles.verifiedText}>v</Text>
+                  </View>
+                </View>
+                <Text style={styles.memberHandle}>{item.handle}</Text>
               </View>
 
-              <View style={styles.rowNameWrap}>
-                <Text style={[styles.rowName, isFirst ? styles.rowNamePrimary : null]} numberOfLines={1}>
-                  {item.name}
+              <TouchableOpacity
+                style={[styles.followButton, item.isFollowing ? styles.followingButton : null]}
+                onPress={() => toggleFollow(item.id)}
+              >
+                <Text style={[styles.followText, item.isFollowing ? styles.followingText : null]}>
+                  {item.isFollowing ? 'Following' : 'Follow'}
                 </Text>
-              </View>
-
-              <View style={[styles.rowScorePill, isFirst ? styles.rowScorePillPrimary : null]}>
-                <Text style={[styles.rowScoreText, isFirst ? styles.rowScoreTextPrimary : null]}>D {item.total_score}</Text>
-              </View>
+              </TouchableOpacity>
             </View>
           );
         }}
         ListEmptyComponent={
           <View style={styles.emptyWrap}>
-            <Text style={styles.emptyTitle}>No leaderboard data</Text>
-            <Text style={styles.emptySub}>Complete quizzes to populate rankings.</Text>
+            <Text style={styles.emptyTitle}>No members found</Text>
+            <Text style={styles.emptySub}>Try another name or clear the filter.</Text>
           </View>
         }
       />
@@ -181,253 +200,194 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#edf1fb',
   },
-  listContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 20,
-  },
   hero: {
-    marginHorizontal: -16,
-    paddingHorizontal: 16,
     backgroundColor: '#5b45f6',
     paddingTop: 56,
+    paddingHorizontal: 16,
     paddingBottom: 28,
-    borderBottomLeftRadius: 34,
-    borderBottomRightRadius: 34,
-    marginBottom: 14,
+    borderBottomLeftRadius: 120,
+    borderBottomRightRadius: 120,
     overflow: 'hidden',
   },
   heroGlow: {
     position: 'absolute',
-    width: 380,
-    height: 380,
-    borderRadius: 190,
-    right: -120,
-    top: -190,
+    width: 320,
+    height: 320,
+    borderRadius: 160,
+    right: -130,
+    top: -170,
     backgroundColor: 'rgba(255,255,255,0.08)',
-    transform: [{ rotate: '20deg' }],
+    transform: [{ rotate: '16deg' }],
   },
-  titleRow: {
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 14,
+    marginBottom: 16,
   },
-  closeButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#ffffff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 10,
-  },
-  closeText: {
-    color: '#6b7280',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  title: {
-    color: '#ffffff',
-    fontSize: 33 / 2,
-    fontWeight: '800',
-  },
-  filterRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-  },
-  filterTab: {
-    flex: 1,
-    marginHorizontal: 5,
-    minHeight: 42,
-    borderRadius: 8,
-    backgroundColor: '#ffffff',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  filterTabActive: {
-    backgroundColor: '#ff7a14',
-  },
-  filterText: {
-    color: '#374151',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  filterTextActive: {
-    color: '#ffffff',
-  },
-  topThreeWrap: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-  },
-  topCard: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  topCardCenter: {
-    marginHorizontal: 8,
-  },
-  topCardSide: {
-    marginBottom: 8,
-  },
-  avatarRing: {
-    width: 86,
-    height: 86,
-    borderRadius: 43,
-    borderWidth: 3,
-    borderColor: '#f97316',
-    backgroundColor: '#dbeafe',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatarRingFirst: {
-    width: 108,
-    height: 108,
-    borderRadius: 54,
-  },
-  avatarInner: {
-    width: '86%',
-    height: '86%',
-    borderRadius: 999,
-    backgroundColor: '#111827',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatarInitial: {
-    color: '#ffffff',
-    fontSize: 20,
-    fontWeight: '800',
-  },
-  badgeRank: {
-    marginTop: -12,
+  backButton: {
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: '#5bbf68',
-    borderWidth: 2,
-    borderColor: '#ffffff',
+    backgroundColor: '#ffffff',
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 12,
   },
-  badgeRankFirst: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+  backText: {
+    color: '#4b5563',
+    fontSize: 16,
+    fontWeight: '700',
+    marginTop: -1,
+  },
+  title: {
+    color: '#ffffff',
+    fontSize: 34 / 2,
+    fontWeight: '800',
+  },
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  searchWrap: {
+    flex: 1,
+    minHeight: 44,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.22)',
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    marginRight: 10,
+  },
+  searchIcon: {
+    color: '#d6d3f4',
+    fontSize: 14,
+    fontWeight: '700',
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    color: '#ffffff',
+    fontSize: 14,
+  },
+  filterButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.24)',
+  },
+  filterButtonActive: {
     backgroundColor: '#ff7a14',
+    borderColor: '#ff7a14',
   },
-  badgeRankText: {
+  filterButtonText: {
     color: '#ffffff',
     fontWeight: '800',
     fontSize: 14,
   },
-  topName: {
-    color: '#ffffff',
-    fontSize: 15,
-    fontWeight: '800',
-    marginTop: 8,
-    maxWidth: 96,
+  listContent: {
+    padding: 16,
   },
-  topScorePill: {
-    marginTop: 8,
-    minWidth: 72,
-    borderRadius: 14,
-    minHeight: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-  },
-  topScoreFirst: {
-    backgroundColor: '#ff7a14',
-  },
-  topScoreSecond: {
-    backgroundColor: '#5bbf68',
-  },
-  topScoreThird: {
-    backgroundColor: '#5b45f6',
-  },
-  topScoreText: {
-    color: '#ffffff',
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  rowCard: {
-    minHeight: 60,
-    borderRadius: 16,
-    backgroundColor: '#ffffff',
+  memberRow: {
+    minHeight: 86,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: '#d1d5db',
-    marginBottom: 10,
+    backgroundColor: '#ffffff',
+    marginBottom: 12,
     paddingHorizontal: 12,
     flexDirection: 'row',
     alignItems: 'center',
   },
-  rowCardPrimary: {
-    backgroundColor: '#5b45f6',
-    borderColor: '#5b45f6',
+  memberRowFeatured: {
+    borderColor: '#fb923c',
   },
-  rowRankWrap: {
-    width: 24,
-    alignItems: 'center',
-    marginRight: 10,
-  },
-  rowRankText: {
-    color: '#6b7280',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  rowRankTextPrimary: {
-    color: '#ffffff',
-  },
-  rowAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#111827',
+  avatarWrap: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#e9e7ff',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
   },
-  rowAvatarInitial: {
+  avatarInner: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#4b5563',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: {
     color: '#ffffff',
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '800',
   },
-  rowNameWrap: {
+  memberTextWrap: {
     flex: 1,
+    marginRight: 8,
   },
-  rowName: {
-    color: '#1f2937',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  rowNamePrimary: {
-    color: '#ffffff',
-  },
-  rowScorePill: {
-    minWidth: 74,
-    minHeight: 30,
-    borderRadius: 15,
-    backgroundColor: '#eef2ff',
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-    justifyContent: 'center',
+  nameRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
+    marginBottom: 2,
   },
-  rowScorePillPrimary: {
-    backgroundColor: '#ffffff',
-    borderColor: '#ffffff',
+  memberName: {
+    color: '#1f2937',
+    fontSize: 16,
+    fontWeight: '800',
+    maxWidth: 160,
   },
-  rowScoreText: {
-    color: '#374151',
+  verifiedDot: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#f97316',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 6,
+  },
+  verifiedText: {
+    color: '#ffffff',
+    fontSize: 10,
+    fontWeight: '800',
+    marginTop: -1,
+  },
+  memberHandle: {
+    color: '#6b7280',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  followButton: {
+    minWidth: 92,
+    minHeight: 34,
+    borderRadius: 17,
+    backgroundColor: '#5b45f6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+  },
+  followingButton: {
+    backgroundColor: '#ecebff',
+    borderWidth: 1,
+    borderColor: '#d6d3f4',
+  },
+  followText: {
+    color: '#ffffff',
     fontSize: 14,
     fontWeight: '700',
   },
-  rowScoreTextPrimary: {
-    color: '#374151',
+  followingText: {
+    color: '#8f82ff',
   },
   emptyWrap: {
-    paddingVertical: 30,
+    paddingVertical: 24,
     alignItems: 'center',
   },
   emptyTitle: {
