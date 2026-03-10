@@ -11,6 +11,7 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useAppDispatch, useAppSelector } from '../../hooks/redux';
 import { login } from '../../store/slices/authSlice';
 
@@ -50,7 +51,7 @@ export default function LoginScreen({ navigation }: any) {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.headerRow}>
           <TouchableOpacity style={styles.backCircle} onPress={() => navigation.goBack()}>
-            <Text style={styles.backText}>{'<'}</Text>
+            <Ionicons name="chevron-back" size={22} color="#374151" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Sign In</Text>
         </View>
@@ -78,7 +79,7 @@ export default function LoginScreen({ navigation }: any) {
                 autoCapitalize="none"
                 editable={!loading}
               />
-              <Text style={styles.inputIcon}>M</Text>
+              <Ionicons name="mail-outline" size={20} color="#d1d5db" />
             </View>
           </View>
 
@@ -94,7 +95,7 @@ export default function LoginScreen({ navigation }: any) {
                 secureTextEntry
                 editable={!loading}
               />
-              <Text style={styles.inputIcon}>O</Text>
+              <Ionicons name="eye-off-outline" size={20} color="#d1d5db" />
             </View>
           </View>
 
@@ -120,12 +121,12 @@ export default function LoginScreen({ navigation }: any) {
         </View>
 
         <TouchableOpacity style={styles.socialButton} onPress={() => Alert.alert('Info', 'Google login coming soon')}>
-          <Text style={styles.socialIcon}>G</Text>
+          <Ionicons name="logo-google" size={20} color="#ffffff" style={styles.socialIcon} />
           <Text style={styles.socialText}>Google</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.socialButton} onPress={() => Alert.alert('Info', 'Apple login coming soon')}>
-          <Text style={styles.socialIcon}>A</Text>
+          <Ionicons name="logo-apple" size={20} color="#ffffff" style={styles.socialIcon} />
           <Text style={styles.socialText}>Apple</Text>
         </TouchableOpacity>
 
@@ -182,11 +183,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
-  },
-  backText: {
-    fontSize: 22,
-    color: '#374151',
-    marginTop: -2,
   },
   headerTitle: {
     color: '#fff',
@@ -250,11 +246,6 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 17 / 1.1,
   },
-  inputIcon: {
-    color: '#d1d5db',
-    fontSize: 16,
-    fontWeight: '700',
-  },
   forgotWrap: {
     alignItems: 'flex-end',
     marginTop: 2,
@@ -312,9 +303,6 @@ const styles = StyleSheet.create({
   },
   socialIcon: {
     marginRight: 10,
-    color: '#ffffff',
-    fontSize: 18,
-    fontWeight: '800',
   },
   socialText: {
     color: '#ffffff',

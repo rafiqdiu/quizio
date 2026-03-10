@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 const slides = [
   {
@@ -63,7 +64,11 @@ export default function OnboardingScreen({ navigation }: any) {
           style={[styles.nextButton, isLast ? styles.nextButtonWide : null]}
           onPress={handleNext}
         >
-          <Text style={styles.nextText}>{isLast ? 'Get Started' : '>'}</Text>
+          {isLast ? (
+            <Text style={styles.nextText}>Get Started</Text>
+          ) : (
+            <Ionicons name="arrow-forward" size={26} color="#ffffff" />
+          )}
         </TouchableOpacity>
       </View>
     </View>

@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { BottomTabBarProps, createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Text, View, TouchableOpacity, StyleSheet } from 'react-native';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import { getCurrentUser, restoreToken } from '../store/slices/authSlice';
 
@@ -43,14 +44,14 @@ function AppTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
               ? options.title
               : route.name;
 
-          const iconText =
+          const iconName =
             route.name === 'CategoriesTab'
-              ? 'H'
+              ? 'home-outline'
               : route.name === 'Leaderboard'
-              ? 'L'
+              ? 'grid-outline'
               : route.name === 'History'
-              ? 'S'
-              : 'C';
+              ? 'people-outline'
+              : 'chatbubble-outline';
 
           return (
             <TouchableOpacity
@@ -71,9 +72,11 @@ function AppTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
               }}
             >
               <View style={[tabBarStyles.iconCircle, isFocused ? tabBarStyles.iconCircleActive : null]}>
-                <Text style={[tabBarStyles.iconText, isFocused ? tabBarStyles.iconTextActive : null]}>
-                  {iconText}
-                </Text>
+                <Ionicons
+                  name={iconName}
+                  size={20}
+                  color={isFocused ? '#ffffff' : '#374151'}
+                />
               </View>
               <Text style={[tabBarStyles.tabText, isFocused ? tabBarStyles.tabTextActive : null]}>
                 {tabLabel}
@@ -86,7 +89,7 @@ function AppTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           style={tabBarStyles.centerPlusButton}
           onPress={() => navigation.navigate('CategoriesTab')}
         >
-          <Text style={tabBarStyles.centerPlusText}>+</Text>
+          <MaterialCommunityIcons name="plus" size={28} color="#ffffff" />
         </TouchableOpacity>
       </View>
     </View>
@@ -262,14 +265,6 @@ const tabBarStyles = StyleSheet.create({
   },
   iconCircleActive: {
     backgroundColor: '#ff7a14',
-  },
-  iconText: {
-    color: '#374151',
-    fontSize: 14,
-    fontWeight: '800',
-  },
-  iconTextActive: {
-    color: '#ffffff',
   },
   tabText: {
     color: '#ddd6fe',

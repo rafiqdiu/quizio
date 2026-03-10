@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   TextInput,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useAppDispatch, useAppSelector } from '../../hooks/redux';
 import { fetchCategories } from '../../store/slices/quizzesSlice';
 import { logout } from '../../store/slices/authSlice';
@@ -90,20 +91,24 @@ export default function CategoriesScreen({ navigation }: any) {
 
         <View style={styles.headerRow}>
           <TouchableOpacity style={styles.circleIcon} onPress={() => setDrawerOpen(true)}>
-            <Text style={styles.iconText}>=</Text>
+            <Ionicons name="menu" size={18} color="#d6d3f4" />
           </TouchableOpacity>
 
           <Text style={styles.brandText}>Quizio</Text>
 
           <View style={styles.headerActionRow}>
-            <TouchableOpacity style={styles.circleIcon}><Text style={styles.iconText}>N</Text></TouchableOpacity>
-            <TouchableOpacity style={styles.circleIcon} onPress={() => navigation.navigate('Profile')}><Text style={styles.iconText}>P</Text></TouchableOpacity>
+            <TouchableOpacity style={styles.circleIcon}>
+              <Ionicons name="notifications-outline" size={18} color="#d6d3f4" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.circleIcon} onPress={() => navigation.navigate('Profile')}>
+              <Ionicons name="person-outline" size={18} color="#d6d3f4" />
+            </TouchableOpacity>
           </View>
         </View>
 
         <View style={styles.searchRow}>
           <View style={styles.searchWrap}>
-            <Text style={styles.searchIcon}>Q</Text>
+            <Ionicons name="search-outline" size={17} color="#9ea0be" style={styles.searchIcon} />
             <TextInput
               style={styles.searchInput}
               value={query}
@@ -112,7 +117,9 @@ export default function CategoriesScreen({ navigation }: any) {
               placeholderTextColor="#8e8cb5"
             />
           </View>
-          <TouchableOpacity style={styles.filterButton}><Text style={styles.filterText}>F</Text></TouchableOpacity>
+          <TouchableOpacity style={styles.filterButton}>
+            <Ionicons name="options-outline" size={18} color="#b5b9df" />
+          </TouchableOpacity>
         </View>
 
         <Text style={styles.sectionHeader}>Browse By Category</Text>
@@ -182,7 +189,7 @@ export default function CategoriesScreen({ navigation }: any) {
                   <Text style={styles.drawerId}>ID: 6546354651</Text>
                 </View>
                 <TouchableOpacity style={styles.drawerClose} onPress={() => setDrawerOpen(false)}>
-                  <Text style={styles.drawerCloseText}>x</Text>
+                  <Ionicons name="close" size={20} color="#fbbf24" />
                 </TouchableOpacity>
               </View>
 
@@ -227,7 +234,11 @@ export default function CategoriesScreen({ navigation }: any) {
 
             <View style={styles.drawerFooter}>
               <Text style={styles.drawerFooterText}>Rate this App</Text>
-              <Text style={styles.drawerFooterStars}>***</Text>
+              <View style={styles.drawerFooterStars}>
+                <Ionicons name="star-outline" size={20} color="#fef08a" />
+                <Ionicons name="star" size={20} color="#fef08a" />
+                <Ionicons name="star" size={20} color="#fef08a" />
+              </View>
             </View>
           </View>
         </View>
@@ -307,11 +318,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 8,
   },
-  iconText: {
-    color: '#d6d3f4',
-    fontSize: 13,
-    fontWeight: '700',
-  },
   brandText: {
     flex: 1,
     color: '#f3f4f6',
@@ -334,9 +340,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   searchIcon: {
-    color: '#9ea0be',
     marginRight: 8,
-    fontWeight: '700',
   },
   searchInput: {
     flex: 1,
@@ -350,10 +354,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#412fad',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  filterText: {
-    color: '#b5b9df',
-    fontWeight: '700',
   },
   sectionHeader: {
     color: '#dbeafe',
@@ -567,10 +567,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  drawerCloseText: {
-    color: '#fbbf24',
-    fontWeight: '700',
-  },
   drawerStatsRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -646,10 +642,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   drawerFooterStars: {
-    color: '#fef08a',
-    fontSize: 20,
-    letterSpacing: 4,
-    fontWeight: '700',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   logoutSheet: {
     marginHorizontal: 12,

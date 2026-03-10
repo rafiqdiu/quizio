@@ -11,6 +11,7 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useAppDispatch, useAppSelector } from '../../hooks/redux';
 import { register } from '../../store/slices/authSlice';
 
@@ -78,7 +79,7 @@ export default function RegisterScreen({ navigation }: any) {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.headerRow}>
           <TouchableOpacity style={styles.backCircle} onPress={() => navigation.goBack()}>
-            <Text style={styles.backText}>{'<'}</Text>
+            <Ionicons name="chevron-back" size={22} color="#374151" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Create Account</Text>
         </View>
@@ -103,7 +104,7 @@ export default function RegisterScreen({ navigation }: any) {
                 value={firstName}
                 onChangeText={setFirstName}
               />
-              <Text style={styles.inputIcon}>U</Text>
+              <Ionicons name="person-outline" size={20} color="#d1d5db" />
             </View>
           </View>
 
@@ -119,7 +120,7 @@ export default function RegisterScreen({ navigation }: any) {
                 keyboardType="email-address"
                 autoCapitalize="none"
               />
-              <Text style={styles.inputIcon}>M</Text>
+              <Ionicons name="mail-outline" size={20} color="#d1d5db" />
             </View>
           </View>
 
@@ -134,7 +135,7 @@ export default function RegisterScreen({ navigation }: any) {
                 onChangeText={setPassword}
                 secureTextEntry
               />
-              <Text style={styles.inputIcon}>O</Text>
+              <Ionicons name="eye-off-outline" size={20} color="#d1d5db" />
             </View>
           </View>
 
@@ -149,7 +150,7 @@ export default function RegisterScreen({ navigation }: any) {
                 onChangeText={setConfirmPassword}
                 secureTextEntry
               />
-              <Text style={styles.inputIcon}>O</Text>
+              <Ionicons name="eye-off-outline" size={20} color="#d1d5db" />
             </View>
           </View>
 
@@ -160,7 +161,7 @@ export default function RegisterScreen({ navigation }: any) {
               onPress={() => setGender('male')}
             >
               <View style={[styles.radioCircle, gender === 'male' ? styles.radioCircleActive : null]}>
-                <Text style={styles.radioMark}>{gender === 'male' ? 'v' : ''}</Text>
+                {gender === 'male' ? <Ionicons name="checkmark" size={11} color="#fff" /> : null}
               </View>
               <Text style={[styles.genderText, gender === 'male' ? styles.genderTextActive : null]}>Male</Text>
             </TouchableOpacity>
@@ -170,7 +171,7 @@ export default function RegisterScreen({ navigation }: any) {
               onPress={() => setGender('female')}
             >
               <View style={[styles.radioCircle, gender === 'female' ? styles.radioCircleActive : null]}>
-                <Text style={styles.radioMark}>{gender === 'female' ? 'v' : ''}</Text>
+                {gender === 'female' ? <Ionicons name="checkmark" size={11} color="#fff" /> : null}
               </View>
               <Text style={[styles.genderText, gender === 'female' ? styles.genderTextActive : null]}>Female</Text>
             </TouchableOpacity>
@@ -178,7 +179,7 @@ export default function RegisterScreen({ navigation }: any) {
 
           <TouchableOpacity style={styles.termsRow} onPress={() => setAcceptedTerms((prev) => !prev)}>
             <View style={[styles.radioCircle, acceptedTerms ? styles.radioCircleActive : null]}>
-              <Text style={styles.radioMark}>{acceptedTerms ? 'v' : ''}</Text>
+              {acceptedTerms ? <Ionicons name="checkmark" size={11} color="#fff" /> : null}
             </View>
             <Text style={styles.termsText}>I accept to all Term, Privacy and Fees</Text>
           </TouchableOpacity>
@@ -201,12 +202,12 @@ export default function RegisterScreen({ navigation }: any) {
         </View>
 
         <TouchableOpacity style={styles.socialButton} onPress={() => Alert.alert('Info', 'Google login coming soon')}>
-          <Text style={styles.socialIcon}>G</Text>
+          <Ionicons name="logo-google" size={20} color="#ffffff" style={styles.socialIcon} />
           <Text style={styles.socialText}>Continue With</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.socialButton} onPress={() => Alert.alert('Info', 'Apple login coming soon')}>
-          <Text style={styles.socialIcon}>A</Text>
+          <Ionicons name="logo-apple" size={20} color="#ffffff" style={styles.socialIcon} />
           <Text style={styles.socialText}>Continue With</Text>
         </TouchableOpacity>
 
@@ -263,11 +264,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
-  },
-  backText: {
-    fontSize: 22,
-    color: '#374151',
-    marginTop: -2,
   },
   headerTitle: {
     color: '#fff',
@@ -336,11 +332,6 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 17 / 1.1,
   },
-  inputIcon: {
-    color: '#d1d5db',
-    fontSize: 16,
-    fontWeight: '700',
-  },
   genderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -372,12 +363,6 @@ const styles = StyleSheet.create({
   radioCircleActive: {
     backgroundColor: ORANGE,
     borderColor: ORANGE,
-  },
-  radioMark: {
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: '800',
-    lineHeight: 10,
   },
   genderText: {
     color: '#8a8cb0',
@@ -445,9 +430,6 @@ const styles = StyleSheet.create({
   },
   socialIcon: {
     marginRight: 10,
-    color: '#ffffff',
-    fontSize: 18,
-    fontWeight: '800',
   },
   socialText: {
     color: '#ffffff',

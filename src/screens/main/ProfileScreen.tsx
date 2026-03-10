@@ -6,6 +6,7 @@ import {
   StyleSheet,
   ScrollView,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useAppDispatch, useAppSelector } from '../../hooks/redux';
 import { logout, getCurrentUser } from '../../store/slices/authSlice';
 import { fetchUserRank } from '../../store/slices/leaderboardSlice';
@@ -80,11 +81,11 @@ export default function ProfileScreen({ navigation }: any) {
                 navigation?.navigate?.('CategoriesTab');
               }}
             >
-              <Text style={styles.roundButtonText}>{'<'}</Text>
+              <Ionicons name="chevron-back" size={20} color="#ffffff" />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>My Profile</Text>
             <TouchableOpacity style={styles.roundButton} onPress={() => setShowLogoutPrompt(true)}>
-              <Text style={styles.roundButtonText}>...</Text>
+              <Ionicons name="ellipsis-horizontal" size={18} color="#ffffff" />
             </TouchableOpacity>
           </View>
         </View>
@@ -95,8 +96,14 @@ export default function ProfileScreen({ navigation }: any) {
           </View>
 
           <View style={styles.metaRow}>
-            <View style={styles.metaPill}><Text style={styles.metaPillText}>V 200</Text></View>
-            <View style={styles.metaPill}><Text style={styles.metaPillText}>R #{userRank?.rank || 1}</Text></View>
+            <View style={styles.metaPill}>
+              <Ionicons name="heart" size={14} color={ORANGE} />
+              <Text style={styles.metaPillText}>200</Text>
+            </View>
+            <View style={styles.metaPill}>
+              <Ionicons name="trophy-outline" size={14} color={ORANGE} />
+              <Text style={styles.metaPillText}>#{userRank?.rank || 1}</Text>
+            </View>
           </View>
 
           <Text style={styles.userName}>{user?.name || 'Frost Phoenix'}</Text>
@@ -108,7 +115,10 @@ export default function ProfileScreen({ navigation }: any) {
               <Text style={styles.walletLabel}>Total Earning</Text>
             </View>
             <View style={styles.walletDivider} />
-            <TouchableOpacity style={styles.walletAction}><Text style={styles.walletActionText}>View Wallet</Text></TouchableOpacity>
+            <TouchableOpacity style={styles.walletAction}>
+              <Text style={styles.walletActionText}>View Wallet</Text>
+              <Ionicons name="chevron-forward" size={16} color={ORANGE} />
+            </TouchableOpacity>
           </View>
 
           <View style={styles.orangeCardWrap}>
@@ -139,12 +149,17 @@ export default function ProfileScreen({ navigation }: any) {
           <View style={styles.contentCard}>
             <View style={styles.contentHeaderRow}>
               <Text style={styles.contentHeader}>Medals 1</Text>
-              <TouchableOpacity><Text style={styles.detailsText}>Details {'>'}</Text></TouchableOpacity>
+              <TouchableOpacity style={styles.detailsButton}>
+                <Text style={styles.detailsText}>Details</Text>
+                <Ionicons name="chevron-forward" size={15} color={ORANGE} />
+              </TouchableOpacity>
             </View>
             <View style={styles.contentDivider} />
             <View style={styles.badgeRow}>
-              {['S', 'L', 'F', 'C', 'L'].map((item, idx) => (
-                <View key={idx} style={styles.badgeItem}><Text style={styles.badgeItemText}>{item}</Text></View>
+              {['sunny-outline', 'flash-outline', 'flame-outline', 'diamond-outline', 'flash-outline'].map((item, idx) => (
+                <View key={idx} style={styles.badgeItem}>
+                  <Ionicons name={item as any} size={24} color="#ffffff" />
+                </View>
               ))}
             </View>
           </View>
@@ -233,11 +248,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  roundButtonText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '700',
-  },
   headerTitle: {
     flex: 1,
     marginLeft: 12,
@@ -290,6 +300,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 12,
+    flexDirection: 'row',
+    gap: 6,
   },
   metaPillText: {
     color: '#e5e7eb',
@@ -347,6 +359,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 10,
+    flexDirection: 'row',
+    gap: 4,
   },
   walletActionText: {
     color: ORANGE,
@@ -435,13 +449,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 10,
   },
+  detailsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
   contentHeader: {
     color: '#f3f4f6',
     fontSize: 34 / 2,
     fontWeight: '700',
   },
   detailsText: {
-    color: '#f3f4f6',
+    color: ORANGE,
     fontSize: 18 / 1.1,
     fontWeight: '600',
   },
@@ -464,11 +483,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: '#d6d3f4',
-  },
-  badgeItemText: {
-    color: '#ffffff',
-    fontSize: 18,
-    fontWeight: '800',
   },
   statsItem: {
     minHeight: 48,
