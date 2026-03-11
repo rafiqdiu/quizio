@@ -2,14 +2,36 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
-  FlatList,
   StyleSheet,
   ActivityIndicator,
   TouchableOpacity,
-  TextInput,
+  FlatList,
+  Animated,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { useAppDispatch, useAppSelector } from '../../hooks/redux';
 import { fetchLeaderboard } from '../../store/slices/leaderboardSlice';
+import { useScrollAnimation } from '../../hooks/useScrollAnimation';
+import AppPageGradient from '../../components/AppPageGradient';
+
+type Period = 'today' | 'weekly' | 'all';
+
+type LeaderboardItem = {
+  id: number;
+  name: string;
+  total_score: number;
+  rank: number;
+};
+
+const fallbackEntries: LeaderboardItem[] = [
+  { id: 1, name: 'Jhon', total_score: 180, rank: 1 },
+  { id: 2, name: 'FrostPhoenix', total_score: 160, rank: 2 },
+  { id: 3, name: 'StealthGamer', total_score: 144, rank: 3 },
+  { id: 4, name: 'CyberSorcerer', total_score: 140, rank: 4 },
+  { id: 5, name: 'ThunderJester', total_score: 132, rank: 5 },
+  { id: 6, name: 'Kevin Lee', total_score: 128, rank: 6 },
+];
 
 function getInitials(name: string) {
   const safe = String(name || '').trim();
@@ -23,75 +45,45 @@ function getInitials(name: string) {
   return `${parts[0].slice(0, 1)}${parts[1].slice(0, 1)}`.toUpperCase();
 }
 
-function toHandle(name: string) {
-  const base = String(name || 'member').toLowerCase().replace(/[^a-z0-9]+/g, '_');
-  return `@${base}`;
-}
-
 export default function LeaderboardScreen({ navigation }: any) {
   const dispatch = useAppDispatch();
   const { entries, loading } = useAppSelector((state) => state.leaderboard);
 
-  const [query, setQuery] = useState('');
-  const [showFollowingOnly, setShowFollowingOnly] = useState(false);
-  const [followingById, setFollowingById] = useState<Record<number, boolean>>({});
+  const [period, setPeriod] = useState<Period>('today');
+  const { onScroll, headerTranslateY, headerOpacity, contentTranslateY, contentOpacity } =
+    useScrollAnimation({ maxShift: 24, fadeDistance: 180 });
 
   useEffect(() => {
     dispatch(fetchLeaderboard());
   }, [dispatch]);
 
-  useEffect(() => {
-    if (!entries.length) {
-      return;
-    }
-
-    setFollowingById((prev) => {
-      const next = { ...prev };
-      entries.forEach((entry) => {
-        if (next[entry.id] === undefined) {
-          next[entry.id] = entry.rank % 4 === 0;
-        }
-      });
-      return next;
-    });
+  const normalizedEntries = useMemo<LeaderboardItem[]>(() => {
+    const source = entries.length > 0 ? entries : fallbackEntries;
+    return [...source].sort((a, b) => a.rank - b.rank);
   }, [entries]);
 
-  const members = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
+  const rankedEntries = useMemo<LeaderboardItem[]>(() => {
+    if (period === 'all') {
+      return normalizedEntries;
+    }
 
-    return [...entries]
-      .sort((a, b) => a.rank - b.rank)
-      .map((entry) => ({
-        ...entry,
-        handle: toHandle(entry.name),
-        isFollowing: Boolean(followingById[entry.id]),
-      }))
-      .filter((member) => {
-        const matchesQuery =
-          normalized.length === 0 ||
-          member.name.toLowerCase().includes(normalized) ||
-          member.handle.toLowerCase().includes(normalized);
+    if (period === 'weekly') {
+      return normalizedEntries.map((item) => ({
+        ...item,
+        total_score: Math.max(80, Math.floor(item.total_score * 0.85)),
+      }));
+    }
 
-        if (!matchesQuery) {
-          return false;
-        }
-
-        if (showFollowingOnly && !member.isFollowing) {
-          return false;
-        }
-
-        return true;
-      });
-  }, [entries, followingById, query, showFollowingOnly]);
-
-  const toggleFollow = (id: number) => {
-    setFollowingById((prev) => ({
-      ...prev,
-      [id]: !prev[id],
+    return normalizedEntries.map((item) => ({
+      ...item,
+      total_score: Math.max(60, Math.floor(item.total_score * 0.7)),
     }));
-  };
+  }, [normalizedEntries, period]);
 
-  if (loading) {
+  const topThreeByRank = rankedEntries.slice(0, 3);
+  const topForDisplay = [topThreeByRank[1], topThreeByRank[0], topThreeByRank[2]].filter(Boolean);
+
+  if (loading && entries.length === 0) {
     return (
       <View style={styles.centerContainer}>
         <ActivityIndicator size="large" color="#5b45f6" />
@@ -101,90 +93,146 @@ export default function LeaderboardScreen({ navigation }: any) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.hero}>
-        <View style={styles.heroGlow} />
+      <AppPageGradient />
+      <Animated.View
+        style={[
+          { transform: [{ translateY: headerTranslateY }], opacity: headerOpacity },
+        ]}
+      >
+        <LinearGradient
+          colors={['#6f4dff', '#5b45f6', '#4f39d8']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.hero}
+        >
+          <View style={styles.heroShine} />
 
-        <View style={styles.headerRow}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => {
-              if (navigation?.canGoBack?.()) {
-                navigation.goBack();
-                return;
-              }
-
-              navigation?.navigate?.('CategoriesTab');
-            }}
-          >
-            <Text style={styles.backText}>{'<'}</Text>
-          </TouchableOpacity>
-          <Text style={styles.title}>Top Members</Text>
-        </View>
-
-        <View style={styles.searchRow}>
-          <View style={styles.searchWrap}>
-            <Text style={styles.searchIcon}>Q</Text>
-            <TextInput
-              style={styles.searchInput}
-              value={query}
-              onChangeText={setQuery}
-              placeholder="Search members"
-              placeholderTextColor="#d6d3f4"
-            />
+          <View style={styles.headerRow}>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => {
+                if (navigation?.canGoBack?.()) {
+                  navigation.goBack();
+                }
+              }}
+            >
+              <Ionicons name="close" size={18} color="#6b7280" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Leaderboard</Text>
           </View>
 
-          <TouchableOpacity
-            style={[styles.filterButton, showFollowingOnly ? styles.filterButtonActive : null]}
-            onPress={() => setShowFollowingOnly((prev) => !prev)}
-          >
-            <Text style={styles.filterButtonText}>{showFollowingOnly ? 'F' : 'A'}</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+          <View style={styles.periodRow}>
+            <TouchableOpacity
+              style={[styles.periodButton, period === 'today' ? styles.periodButtonActive : null]}
+              onPress={() => setPeriod('today')}
+            >
+              <Text style={[styles.periodText, period === 'today' ? styles.periodTextActive : null]}>Today</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.periodButton, period === 'weekly' ? styles.periodButtonActive : null]}
+              onPress={() => setPeriod('weekly')}
+            >
+              <Text style={[styles.periodText, period === 'weekly' ? styles.periodTextActive : null]}>Weekly</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.periodButton, period === 'all' ? styles.periodButtonActive : null]}
+              onPress={() => setPeriod('all')}
+            >
+              <Text style={[styles.periodText, period === 'all' ? styles.periodTextActive : null]}>All Time</Text>
+            </TouchableOpacity>
+          </View>
+        </LinearGradient>
+      </Animated.View>
 
-      <FlatList
-        data={members}
-        keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={styles.listContent}
-        renderItem={({ item, index }) => {
-          const featured = index === 0;
+      <Animated.View
+        style={[
+          styles.body,
+          { transform: [{ translateY: contentTranslateY }], opacity: contentOpacity },
+        ]}
+      >
+        <View style={styles.podiumRow}>
+          {topForDisplay.map((item, index) => {
+            const center = index === 1;
+            const badgeRank = center ? 1 : index === 0 ? 2 : 3;
+            return (
+              <View key={item.id} style={[styles.podiumItem, center ? styles.podiumCenter : null]}>
+                {center ? (
+                  <View style={styles.crownWrap}>
+                    <Ionicons name="trophy" size={28} color="#facc15" />
+                  </View>
+                ) : null}
 
-          return (
-            <View style={[styles.memberRow, featured ? styles.memberRowFeatured : null]}>
-              <View style={styles.avatarWrap}>
-                <View style={styles.avatarInner}>
-                  <Text style={styles.avatarText}>{getInitials(item.name)}</Text>
-                </View>
-              </View>
-
-              <View style={styles.memberTextWrap}>
-                <View style={styles.nameRow}>
-                  <Text style={styles.memberName} numberOfLines={1}>{item.name}</Text>
-                  <View style={styles.verifiedDot}>
-                    <Text style={styles.verifiedText}>v</Text>
+                <View style={[styles.podiumAvatarRing, center ? styles.podiumAvatarRingCenter : null]}>
+                  <View style={styles.podiumAvatarInner}>
+                    <Text style={styles.podiumAvatarText}>{getInitials(item.name)}</Text>
                   </View>
                 </View>
-                <Text style={styles.memberHandle}>{item.handle}</Text>
-              </View>
 
-              <TouchableOpacity
-                style={[styles.followButton, item.isFollowing ? styles.followingButton : null]}
-                onPress={() => toggleFollow(item.id)}
-              >
-                <Text style={[styles.followText, item.isFollowing ? styles.followingText : null]}>
-                  {item.isFollowing ? 'Following' : 'Follow'}
+                <View style={[styles.rankDot, center ? styles.rankDotCenter : null]}>
+                  <Text style={styles.rankDotText}>{badgeRank}</Text>
+                </View>
+
+                <Text style={styles.podiumName} numberOfLines={1}>
+                  {item.name}
                 </Text>
-              </TouchableOpacity>
-            </View>
-          );
-        }}
-        ListEmptyComponent={
-          <View style={styles.emptyWrap}>
-            <Text style={styles.emptyTitle}>No members found</Text>
-            <Text style={styles.emptySub}>Try another name or clear the filter.</Text>
-          </View>
-        }
-      />
+
+                <View style={[styles.scorePill, center ? styles.scorePillCenter : null]}>
+                  <Ionicons name="diamond-outline" size={12} color="#ffffff" />
+                  <Text style={styles.scorePillText}>{item.total_score}</Text>
+                </View>
+              </View>
+            );
+          })}
+        </View>
+
+        <Animated.FlatList
+          data={rankedEntries}
+          keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={styles.listContent}
+          onScroll={onScroll}
+          scrollEventThrottle={16}
+          showsVerticalScrollIndicator={false}
+          nestedScrollEnabled
+          keyboardShouldPersistTaps="handled"
+          renderItem={({ item, index }) => {
+            const isTop = index === 0;
+            return (
+              <View style={[styles.rowCard, isTop ? styles.rowCardTop : null]}>
+                {isTop ? (
+                  <LinearGradient
+                    colors={['#4f39d8', '#5b45f6']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={StyleSheet.absoluteFill}
+                  />
+                ) : null}
+
+                <Text style={[styles.rowRank, isTop ? styles.rowRankTop : null]}>{item.rank}</Text>
+
+                <View style={styles.rowAvatar}>
+                  <Text style={styles.rowAvatarText}>{getInitials(item.name)}</Text>
+                </View>
+
+                <Text style={[styles.rowName, isTop ? styles.rowNameTop : null]} numberOfLines={1}>
+                  {item.name}
+                </Text>
+
+                <Ionicons
+                  name="trophy"
+                  size={14}
+                  color={isTop ? '#fb923c' : '#f97316'}
+                  style={styles.rowTrophy}
+                />
+
+                <View style={[styles.rowScorePill, isTop ? styles.rowScorePillTop : null]}>
+                  <Ionicons name="diamond-outline" size={12} color="#f97316" />
+                  <Text style={styles.rowScoreText}>{item.total_score}</Text>
+                </View>
+              </View>
+            );
+          }}
+        />
+      </Animated.View>
     </View>
   );
 }
@@ -201,203 +249,230 @@ const styles = StyleSheet.create({
     backgroundColor: '#edf1fb',
   },
   hero: {
-    backgroundColor: '#5b45f6',
-    paddingTop: 56,
+    paddingTop: 54,
     paddingHorizontal: 16,
-    paddingBottom: 28,
-    borderBottomLeftRadius: 120,
-    borderBottomRightRadius: 120,
+    paddingBottom: 18,
+    borderBottomLeftRadius: 64,
+    borderBottomRightRadius: 64,
     overflow: 'hidden',
   },
-  heroGlow: {
+  heroShine: {
     position: 'absolute',
-    width: 320,
-    height: 320,
-    borderRadius: 160,
-    right: -130,
-    top: -170,
+    right: -40,
+    top: -90,
+    width: 280,
+    height: 280,
+    borderRadius: 140,
     backgroundColor: 'rgba(255,255,255,0.08)',
-    transform: [{ rotate: '16deg' }],
+    transform: [{ rotate: '18deg' }],
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
   },
-  backButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+  closeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: '#ffffff',
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 12,
   },
-  backText: {
-    color: '#4b5563',
-    fontSize: 16,
-    fontWeight: '700',
-    marginTop: -1,
-  },
-  title: {
+  headerTitle: {
     color: '#ffffff',
     fontSize: 34 / 2,
     fontWeight: '800',
   },
-  searchRow: {
+  periodRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  searchWrap: {
-    flex: 1,
-    minHeight: 44,
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.22)',
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    flexDirection: 'row',
+  periodButton: {
+    width: '30.5%',
+    minHeight: 36,
+    borderRadius: 8,
+    backgroundColor: '#f3f4f6',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    marginRight: 10,
+    justifyContent: 'center',
   },
-  searchIcon: {
-    color: '#d6d3f4',
+  periodButtonActive: {
+    backgroundColor: '#ff7a14',
+  },
+  periodText: {
+    color: '#374151',
     fontSize: 14,
     fontWeight: '700',
-    marginRight: 8,
   },
-  searchInput: {
+  periodTextActive: {
+    color: '#ffffff',
+  },
+  body: {
     flex: 1,
-    color: '#ffffff',
-    fontSize: 14,
+    marginTop: -6,
   },
-  filterButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.24)',
-  },
-  filterButtonActive: {
-    backgroundColor: '#ff7a14',
-    borderColor: '#ff7a14',
-  },
-  filterButtonText: {
-    color: '#ffffff',
-    fontWeight: '800',
-    fontSize: 14,
-  },
-  listContent: {
-    padding: 16,
-  },
-  memberRow: {
-    minHeight: 86,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-    backgroundColor: '#ffffff',
-    marginBottom: 12,
-    paddingHorizontal: 12,
+  podiumRow: {
     flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'flex-end',
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    marginBottom: 10,
+  },
+  podiumItem: {
+    width: '30%',
     alignItems: 'center',
   },
-  memberRowFeatured: {
-    borderColor: '#fb923c',
+  podiumCenter: {
+    marginTop: -12,
   },
-  avatarWrap: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: '#e9e7ff',
-    alignItems: 'center',
+  crownWrap: {
+    marginBottom: -8,
+    zIndex: 3,
+  },
+  podiumAvatarRing: {
+    width: 94,
+    height: 94,
+    borderRadius: 47,
+    borderWidth: 3,
+    borderColor: '#ff7a14',
     justifyContent: 'center',
-    marginRight: 10,
+    alignItems: 'center',
+    backgroundColor: '#e9e7ff',
   },
-  avatarInner: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+  podiumAvatarRingCenter: {
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+  },
+  podiumAvatarInner: {
+    width: '84%',
+    height: '84%',
+    borderRadius: 999,
     backgroundColor: '#4b5563',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: {
+  podiumAvatarText: {
     color: '#ffffff',
-    fontSize: 14,
+    fontSize: 22,
     fontWeight: '800',
   },
-  memberTextWrap: {
-    flex: 1,
-    marginRight: 8,
-  },
-  nameRow: {
-    flexDirection: 'row',
+  rankDot: {
+    minWidth: 30,
+    height: 30,
+    borderRadius: 15,
+    paddingHorizontal: 6,
+    backgroundColor: '#4f46e5',
     alignItems: 'center',
-    marginBottom: 2,
+    justifyContent: 'center',
+    marginTop: -10,
+    marginBottom: 8,
   },
-  memberName: {
-    color: '#1f2937',
-    fontSize: 16,
-    fontWeight: '800',
-    maxWidth: 160,
-  },
-  verifiedDot: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
+  rankDotCenter: {
     backgroundColor: '#f97316',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 6,
   },
-  verifiedText: {
+  rankDotText: {
     color: '#ffffff',
-    fontSize: 10,
+    fontSize: 15 / 1.1,
     fontWeight: '800',
-    marginTop: -1,
   },
-  memberHandle: {
-    color: '#6b7280',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  followButton: {
-    minWidth: 92,
-    minHeight: 34,
-    borderRadius: 17,
-    backgroundColor: '#5b45f6',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 12,
-  },
-  followingButton: {
-    backgroundColor: '#ecebff',
-    borderWidth: 1,
-    borderColor: '#d6d3f4',
-  },
-  followText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  followingText: {
-    color: '#8f82ff',
-  },
-  emptyWrap: {
-    paddingVertical: 24,
-    alignItems: 'center',
-  },
-  emptyTitle: {
+  podiumName: {
     color: '#111827',
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 34 / 2,
+    fontWeight: '800',
     marginBottom: 6,
   },
-  emptySub: {
+  scorePill: {
+    minHeight: 28,
+    borderRadius: 14,
+    backgroundColor: '#22c55e',
+    paddingHorizontal: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  scorePillCenter: {
+    backgroundColor: '#ff7a14',
+  },
+  scorePillText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '700',
+    marginLeft: 4,
+  },
+  listContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 110,
+  },
+  rowCard: {
+    minHeight: 58,
+    borderRadius: 16,
+    backgroundColor: '#ffffff',
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    overflow: 'hidden',
+  },
+  rowCardTop: {
+    borderColor: '#5b45f6',
+  },
+  rowRank: {
+    width: 18,
     color: '#6b7280',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  rowRankTop: {
+    color: '#ddd6fe',
+  },
+  rowAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#4b5563',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  rowAvatarText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  rowName: {
+    flex: 1,
+    color: '#1f2937',
+    fontSize: 14,
+    fontWeight: '700',
+    marginRight: 6,
+  },
+  rowNameTop: {
+    color: '#ffffff',
+  },
+  rowTrophy: {
+    marginRight: 6,
+  },
+  rowScorePill: {
+    minHeight: 28,
+    borderRadius: 14,
+    backgroundColor: '#f3f4f6',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    paddingHorizontal: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  rowScorePillTop: {
+    backgroundColor: '#ffffff',
+  },
+  rowScoreText: {
+    color: '#374151',
     fontSize: 13,
+    fontWeight: '700',
+    marginLeft: 4,
   },
 });

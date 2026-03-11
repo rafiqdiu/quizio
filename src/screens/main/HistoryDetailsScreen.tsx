@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Platform, Animated } from 'react-native';
 import axios from 'axios';
 import { API_BASE_URL } from '../../config/api';
 import { useAppSelector } from '../../hooks/redux';
+import { useScrollAnimation } from '../../hooks/useScrollAnimation';
+import AppPageGradient from '../../components/AppPageGradient';
 
 function formatDuration(totalSeconds: number) {
   const safeSeconds = Number.isFinite(totalSeconds) && totalSeconds > 0 ? Math.floor(totalSeconds) : 0;
@@ -22,6 +24,9 @@ export default function HistoryDetailsScreen({ route }: any) {
   const fallbackAttempt = route?.params?.attempt || {};
   const [detailedAttempt, setDetailedAttempt] = useState<any>(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
+  const bottomPadding = Platform.OS === 'web' ? 24 : 120;
+  const { onScroll, headerTranslateY, headerOpacity, contentTranslateY, contentOpacity } =
+    useScrollAnimation();
 
   useEffect(() => {
     const attemptId = Number(fallbackAttempt?.id);
@@ -57,98 +62,121 @@ export default function HistoryDetailsScreen({ route }: any) {
   const questionItems = Array.isArray(attempt?.quiz?.questions) ? attempt.quiz.questions : [];
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.headerCard}>
-        <Text style={styles.title}>{attempt.quiz?.title || 'Quiz Details'}</Text>
-        <Text style={styles.dateText}>
-          {attempt.created_at ? new Date(attempt.created_at).toLocaleString() : '-'}
-        </Text>
-      </View>
+    <View style={styles.container}>
+      <AppPageGradient />
+      <Animated.ScrollView
+        contentContainerStyle={[styles.content, { paddingBottom: bottomPadding }]}
+        scrollEnabled
+        showsVerticalScrollIndicator
+        nestedScrollEnabled
+        keyboardShouldPersistTaps="handled"
+        bounces={Platform.OS === 'ios'}
+        alwaysBounceVertical={Platform.OS === 'ios'}
+        overScrollMode="always"
+        contentInsetAdjustmentBehavior="automatic"
+        persistentScrollbar={Platform.OS === 'android'}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+      >
+        <Animated.View
+          style={[
+            styles.headerCard,
+            { transform: [{ translateY: headerTranslateY }], opacity: headerOpacity },
+          ]}
+        >
+          <Text style={styles.title}>{attempt.quiz?.title || 'Quiz Details'}</Text>
+          <Text style={styles.dateText}>
+            {attempt.created_at ? new Date(attempt.created_at).toLocaleString() : '-'}
+          </Text>
+        </Animated.View>
 
-      <View style={styles.statsCard}>
-        <View style={styles.statRow}>
-          <Text style={styles.statLabel}>Total Questions</Text>
-          <Text style={styles.statValue}>{totalQuestions}</Text>
-        </View>
+        <Animated.View style={{ transform: [{ translateY: contentTranslateY }], opacity: contentOpacity }}>
+          <View style={styles.statsCard}>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Total Questions</Text>
+              <Text style={styles.statValue}>{totalQuestions}</Text>
+            </View>
 
-        <View style={styles.statRow}>
-          <Text style={styles.statLabel}>Correct Answers</Text>
-          <Text style={[styles.statValue, styles.correctValue]}>{correctAnswers}</Text>
-        </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Correct Answers</Text>
+              <Text style={[styles.statValue, styles.correctValue]}>{correctAnswers}</Text>
+            </View>
 
-        <View style={styles.statRow}>
-          <Text style={styles.statLabel}>False Answers</Text>
-          <Text style={[styles.statValue, styles.falseValue]}>{falseAnswers}</Text>
-        </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>False Answers</Text>
+              <Text style={[styles.statValue, styles.falseValue]}>{falseAnswers}</Text>
+            </View>
 
-        <View style={[styles.statRow, styles.lastRow]}>
-          <Text style={styles.statLabel}>Total Time Spent</Text>
-          <Text style={styles.statValue}>{formatDuration(timeSpent)}</Text>
-        </View>
-      </View>
-
-      <View style={styles.qaCard}>
-        <Text style={styles.qaTitle}>Questions & Answers</Text>
-
-        {detailsLoading && questionItems.length === 0 ? (
-          <View style={styles.loadingWrap}>
-            <ActivityIndicator size="small" color="#3b82f6" />
+            <View style={[styles.statRow, styles.lastRow]}>
+              <Text style={styles.statLabel}>Total Time Spent</Text>
+              <Text style={styles.statValue}>{formatDuration(timeSpent)}</Text>
+            </View>
           </View>
-        ) : questionItems.length === 0 ? (
-          <Text style={styles.emptyQaText}>No question details found.</Text>
-        ) : (
-          questionItems.map((question: any, index: number) => {
-            const rawSelectedIndex = attemptAnswers[question.id] ?? attemptAnswers[String(question.id)];
-            const selectedIndex = Number(rawSelectedIndex);
-            const correctIndex = Number(question.correct_answer);
-            const hasSelected = Number.isInteger(selectedIndex) && selectedIndex >= 0;
-            const isCorrect = hasSelected && Number.isInteger(correctIndex) && selectedIndex === correctIndex;
 
-            return (
-              <View key={question.id} style={styles.qaItem}>
-                <Text style={styles.questionText}>
-                  {index + 1}. {question.question_text}
-                </Text>
+          <View style={styles.qaCard}>
+            <Text style={styles.qaTitle}>Questions & Answers</Text>
 
-                {Array.isArray(question.options) &&
-                  question.options.map((option: string, optionIndex: number) => {
-                    const optionIsCorrect =
-                      Number.isInteger(correctIndex) && optionIndex === correctIndex;
-                    const optionIsSelected = hasSelected && optionIndex === selectedIndex;
-                    const rowPrefix = optionIsCorrect ? '✓' : optionIsSelected ? '✗' : '○';
-
-                    const labels: string[] = [];
-                    if (optionIsCorrect) {
-                      labels.push('Correct');
-                    }
-                    if (optionIsSelected) {
-                      labels.push('Your answer');
-                    }
-
-                    return (
-                      <Text
-                        key={`${question.id}-${optionIndex}`}
-                        style={[
-                          styles.optionText,
-                          optionIsCorrect ? styles.optionCorrectText : null,
-                          optionIsSelected && !optionIsCorrect ? styles.optionWrongSelectedText : null,
-                        ]}
-                      >
-                        {rowPrefix} {option}
-                        {labels.length > 0 ? ` (${labels.join(', ')})` : ''}
-                      </Text>
-                    );
-                  })}
-
-                <Text style={[styles.answerText, isCorrect ? styles.resultCorrect : styles.resultIncorrect]}>
-                  {hasSelected ? (isCorrect ? '✓ Correct' : '✗ Incorrect') : 'Not answered'}
-                </Text>
+            {detailsLoading && questionItems.length === 0 ? (
+              <View style={styles.loadingWrap}>
+                <ActivityIndicator size="small" color="#3b82f6" />
               </View>
-            );
-          })
-        )}
-      </View>
-    </ScrollView>
+            ) : questionItems.length === 0 ? (
+              <Text style={styles.emptyQaText}>No question details found.</Text>
+            ) : (
+              questionItems.map((question: any, index: number) => {
+                const rawSelectedIndex = attemptAnswers[question.id] ?? attemptAnswers[String(question.id)];
+                const selectedIndex = Number(rawSelectedIndex);
+                const correctIndex = Number(question.correct_answer);
+                const hasSelected = Number.isInteger(selectedIndex) && selectedIndex >= 0;
+                const isCorrect = hasSelected && Number.isInteger(correctIndex) && selectedIndex === correctIndex;
+
+                return (
+                  <View key={question.id} style={styles.qaItem}>
+                    <Text style={styles.questionText}>
+                      {index + 1}. {question.question_text}
+                    </Text>
+
+                    {Array.isArray(question.options) &&
+                      question.options.map((option: string, optionIndex: number) => {
+                        const optionIsCorrect =
+                          Number.isInteger(correctIndex) && optionIndex === correctIndex;
+                        const optionIsSelected = hasSelected && optionIndex === selectedIndex;
+                        const rowPrefix = optionIsCorrect ? '✓' : optionIsSelected ? '✗' : '○';
+
+                        const labels: string[] = [];
+                        if (optionIsCorrect) {
+                          labels.push('Correct');
+                        }
+                        if (optionIsSelected) {
+                          labels.push('Your answer');
+                        }
+
+                        return (
+                          <Text
+                            key={`${question.id}-${optionIndex}`}
+                            style={[
+                              styles.optionText,
+                              optionIsCorrect ? styles.optionCorrectText : null,
+                              optionIsSelected && !optionIsCorrect ? styles.optionWrongSelectedText : null,
+                            ]}
+                          >
+                            {rowPrefix} {option}
+                            {labels.length > 0 ? ` (${labels.join(', ')})` : ''}
+                          </Text>
+                        );
+                      })}
+
+                    <Text style={[styles.answerText, isCorrect ? styles.resultCorrect : styles.resultIncorrect]}>
+                      {hasSelected ? (isCorrect ? '✓ Correct' : '✗ Incorrect') : 'Not answered'}
+                    </Text>
+                  </View>
+                );
+              })
+            )}
+          </View>
+        </Animated.View>
+      </Animated.ScrollView>
+    </View>
   );
 }
 
@@ -158,6 +186,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f1f5f9',
   },
   content: {
+    flexGrow: 1,
     padding: 16,
   },
   headerCard: {

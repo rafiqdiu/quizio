@@ -3,7 +3,8 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { BottomTabBarProps, createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Text, View, TouchableOpacity, StyleSheet } from 'react-native';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import { getCurrentUser, restoreToken } from '../store/slices/authSlice';
 
@@ -29,11 +30,17 @@ import HistoryDetailsScreen from '../screens/main/HistoryDetailsScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
+const LEADERBOARD_HEADER_COLOR = '#5b45f6';
 
 function AppTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   return (
     <View style={tabBarStyles.wrap}>
-      <View style={tabBarStyles.bar}>
+      <LinearGradient
+        colors={['#6f5df7', '#5b45f6', '#4a2f99']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={tabBarStyles.bar}
+      >
         {state.routes.map((route, index) => {
           const isFocused = state.index === index;
           const { options } = descriptors[route.key];
@@ -48,10 +55,10 @@ function AppTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             route.name === 'CategoriesTab'
               ? 'home-outline'
               : route.name === 'Leaderboard'
-              ? 'grid-outline'
+              ? 'trophy-outline'
               : route.name === 'History'
-              ? 'people-outline'
-              : 'chatbubble-outline';
+              ? 'time-outline'
+              : 'person-outline';
 
           return (
             <TouchableOpacity
@@ -84,14 +91,7 @@ function AppTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             </TouchableOpacity>
           );
         })}
-
-        <TouchableOpacity
-          style={tabBarStyles.centerPlusButton}
-          onPress={() => navigation.navigate('CategoriesTab')}
-        >
-          <MaterialCommunityIcons name="plus" size={28} color="#ffffff" />
-        </TouchableOpacity>
-      </View>
+      </LinearGradient>
     </View>
   );
 }
@@ -121,7 +121,7 @@ function CategoriesNavigator() {
     <Stack.Navigator
       screenOptions={{
         headerStyle: {
-          backgroundColor: '#1e293b',
+          backgroundColor: LEADERBOARD_HEADER_COLOR,
         },
         headerTintColor: '#fff',
         headerTitleStyle: {
@@ -160,7 +160,7 @@ function HistoryNavigator() {
     <Stack.Navigator
       screenOptions={{
         headerStyle: {
-          backgroundColor: '#1e293b',
+          backgroundColor: LEADERBOARD_HEADER_COLOR,
         },
         headerTintColor: '#fff',
         headerTitleStyle: {
@@ -202,24 +202,24 @@ function MainNavigator() {
         name="Leaderboard"
         component={LeaderboardScreen}
         options={{
-          title: 'Library',
-          tabBarLabel: 'Library',
+          title: 'Leaderboard',
+          tabBarLabel: 'Leaderboard',
         }}
       />
       <Tab.Screen
         name="History"
         component={HistoryNavigator}
         options={{
-          title: 'Share & Earn',
-          tabBarLabel: 'Share & Earn',
+          title: 'History',
+          tabBarLabel: 'History',
         }}
       />
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
         options={{
-          title: 'Chat',
-          tabBarLabel: 'Chat',
+          title: 'Profile',
+          tabBarLabel: 'Profile',
         }}
       />
     </Tab.Navigator>
@@ -239,15 +239,20 @@ const tabBarStyles = StyleSheet.create({
   bar: {
     minHeight: 86,
     borderRadius: 26,
-    backgroundColor: '#5b45f6',
     borderWidth: 1,
-    borderColor: '#6f5df7',
+    borderColor: 'rgba(255, 255, 255, 0.15)',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-end',
     paddingHorizontal: 6,
     paddingBottom: 8,
     paddingTop: 12,
+    overflow: 'hidden',
+    shadowColor: '#5b45f6',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 8,
   },
   tabButton: {
     flex: 1,
@@ -255,13 +260,18 @@ const tabBarStyles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   iconCircle: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: '#ffffff',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
   },
   iconCircleActive: {
     backgroundColor: '#ff7a14',
@@ -274,26 +284,6 @@ const tabBarStyles = StyleSheet.create({
   tabTextActive: {
     color: '#ffffff',
     fontWeight: '700',
-  },
-  centerPlusButton: {
-    position: 'absolute',
-    alignSelf: 'center',
-    top: -22,
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: '#5b45f6',
-    borderWidth: 4,
-    borderColor: '#edf1fb',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  centerPlusText: {
-    color: '#ffffff',
-    fontSize: 30,
-    fontWeight: '700',
-    lineHeight: 30,
-    marginTop: -2,
   },
 });
 

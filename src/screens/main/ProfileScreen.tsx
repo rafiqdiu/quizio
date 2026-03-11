@@ -5,11 +5,13 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  Animated,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useAppDispatch, useAppSelector } from '../../hooks/redux';
 import { logout, getCurrentUser } from '../../store/slices/authSlice';
 import { fetchUserRank } from '../../store/slices/leaderboardSlice';
+import { useScrollAnimation } from '../../hooks/useScrollAnimation';
+import AppPageGradient from '../../components/AppPageGradient';
 
 type ProfileTab = 'badge' | 'stats' | 'matches';
 
@@ -38,6 +40,8 @@ export default function ProfileScreen({ navigation }: any) {
 
   const [activeTab, setActiveTab] = useState<ProfileTab>('badge');
   const [showLogoutPrompt, setShowLogoutPrompt] = useState(false);
+  const { onScroll, headerTranslateY, headerOpacity, contentTranslateY, contentOpacity } =
+    useScrollAnimation();
 
   useEffect(() => {
     if (token) {
@@ -66,8 +70,19 @@ export default function ProfileScreen({ navigation }: any) {
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.hero}>
+      <AppPageGradient />
+      <Animated.ScrollView
+        contentContainerStyle={styles.content}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        showsVerticalScrollIndicator={false}
+      >
+        <Animated.View
+          style={[
+            styles.hero,
+            { transform: [{ translateY: headerTranslateY }], opacity: headerOpacity },
+          ]}
+        >
           <View style={styles.heroGlow} />
           <View style={styles.headerRow}>
             <TouchableOpacity
@@ -81,29 +96,24 @@ export default function ProfileScreen({ navigation }: any) {
                 navigation?.navigate?.('CategoriesTab');
               }}
             >
-              <Ionicons name="chevron-back" size={20} color="#ffffff" />
+              <Text style={styles.roundButtonText}>{'<'}</Text>
             </TouchableOpacity>
             <Text style={styles.headerTitle}>My Profile</Text>
             <TouchableOpacity style={styles.roundButton} onPress={() => setShowLogoutPrompt(true)}>
-              <Ionicons name="ellipsis-horizontal" size={18} color="#ffffff" />
+              <Text style={styles.roundButtonText}>...</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </Animated.View>
 
+        <Animated.View style={{ transform: [{ translateY: contentTranslateY }], opacity: contentOpacity }}>
         <View style={styles.profileTop}>
           <View style={styles.avatarRing}>
             <View style={styles.avatarInner}><Text style={styles.avatarText}>{getInitials(user?.name || 'Frost Phoenix')}</Text></View>
           </View>
 
           <View style={styles.metaRow}>
-            <View style={styles.metaPill}>
-              <Ionicons name="heart" size={14} color={ORANGE} />
-              <Text style={styles.metaPillText}>200</Text>
-            </View>
-            <View style={styles.metaPill}>
-              <Ionicons name="trophy-outline" size={14} color={ORANGE} />
-              <Text style={styles.metaPillText}>#{userRank?.rank || 1}</Text>
-            </View>
+            <View style={styles.metaPill}><Text style={styles.metaPillText}>V 200</Text></View>
+            <View style={styles.metaPill}><Text style={styles.metaPillText}>R #{userRank?.rank || 1}</Text></View>
           </View>
 
           <Text style={styles.userName}>{user?.name || 'Frost Phoenix'}</Text>
@@ -115,10 +125,7 @@ export default function ProfileScreen({ navigation }: any) {
               <Text style={styles.walletLabel}>Total Earning</Text>
             </View>
             <View style={styles.walletDivider} />
-            <TouchableOpacity style={styles.walletAction}>
-              <Text style={styles.walletActionText}>View Wallet</Text>
-              <Ionicons name="chevron-forward" size={16} color={ORANGE} />
-            </TouchableOpacity>
+            <TouchableOpacity style={styles.walletAction}><Text style={styles.walletActionText}>View Wallet</Text></TouchableOpacity>
           </View>
 
           <View style={styles.orangeCardWrap}>
@@ -149,17 +156,12 @@ export default function ProfileScreen({ navigation }: any) {
           <View style={styles.contentCard}>
             <View style={styles.contentHeaderRow}>
               <Text style={styles.contentHeader}>Medals 1</Text>
-              <TouchableOpacity style={styles.detailsButton}>
-                <Text style={styles.detailsText}>Details</Text>
-                <Ionicons name="chevron-forward" size={15} color={ORANGE} />
-              </TouchableOpacity>
+              <TouchableOpacity><Text style={styles.detailsText}>Details {'>'}</Text></TouchableOpacity>
             </View>
             <View style={styles.contentDivider} />
             <View style={styles.badgeRow}>
-              {['sunny-outline', 'flash-outline', 'flame-outline', 'diamond-outline', 'flash-outline'].map((item, idx) => (
-                <View key={idx} style={styles.badgeItem}>
-                  <Ionicons name={item as any} size={24} color="#ffffff" />
-                </View>
+              {['S', 'L', 'F', 'C', 'L'].map((item, idx) => (
+                <View key={idx} style={styles.badgeItem}><Text style={styles.badgeItemText}>{item}</Text></View>
               ))}
             </View>
           </View>
@@ -180,7 +182,8 @@ export default function ProfileScreen({ navigation }: any) {
             <View style={styles.statsItem}><Text style={styles.statsLabel}>Science Duel</Text><Text style={styles.statsValue}>Lost</Text></View>
           </View>
         )}
-      </ScrollView>
+        </Animated.View>
+      </Animated.ScrollView>
 
       {showLogoutPrompt && (
         <View style={styles.overlay}>
@@ -248,6 +251,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  roundButtonText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '700',
+  },
   headerTitle: {
     flex: 1,
     marginLeft: 12,
@@ -300,8 +308,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 12,
-    flexDirection: 'row',
-    gap: 6,
   },
   metaPillText: {
     color: '#e5e7eb',
@@ -359,8 +365,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 10,
-    flexDirection: 'row',
-    gap: 4,
   },
   walletActionText: {
     color: ORANGE,
@@ -449,18 +453,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 10,
   },
-  detailsButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
   contentHeader: {
     color: '#f3f4f6',
     fontSize: 34 / 2,
     fontWeight: '700',
   },
   detailsText: {
-    color: ORANGE,
+    color: '#f3f4f6',
     fontSize: 18 / 1.1,
     fontWeight: '600',
   },
@@ -483,6 +482,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: '#d6d3f4',
+  },
+  badgeItemText: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: '800',
   },
   statsItem: {
     minHeight: 48,

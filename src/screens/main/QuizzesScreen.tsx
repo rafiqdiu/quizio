@@ -6,14 +6,23 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
+  Platform,
+  Animated,
 } from 'react-native';
 import { useAppDispatch, useAppSelector } from '../../hooks/redux';
 import { fetchQuizzesByCategory } from '../../store/slices/quizzesSlice';
+import { useScrollAnimation } from '../../hooks/useScrollAnimation';
+import AppPageGradient from '../../components/AppPageGradient';
 
 export default function QuizzesScreen({ route, navigation }: any) {
   const { categoryId } = route.params;
   const dispatch = useAppDispatch();
   const { currentQuizzes: quizzes, loading } = useAppSelector((state) => state.quizzes);
+  const bottomPadding = Platform.OS === 'web' ? 24 : 120;
+  const { onScroll, contentTranslateY, contentOpacity } = useScrollAnimation({
+    maxShift: 16,
+    fadeDistance: 160,
+  });
 
   useEffect(() => {
     dispatch(fetchQuizzesByCategory(categoryId));
@@ -35,10 +44,21 @@ export default function QuizzesScreen({ route, navigation }: any) {
   }
 
   return (
-    <View style={styles.container}>
-      <FlatList
+    <Animated.View
+      style={[
+        styles.container,
+        { transform: [{ translateY: contentTranslateY }], opacity: contentOpacity },
+      ]}
+    >
+      <AppPageGradient />
+      <Animated.FlatList
         data={quizzes}
         keyExtractor={(item) => item.id.toString()}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        showsVerticalScrollIndicator
+        nestedScrollEnabled
+        keyboardShouldPersistTaps="handled"
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.quizCard}
@@ -77,9 +97,9 @@ export default function QuizzesScreen({ route, navigation }: any) {
             </View>
           </TouchableOpacity>
         )}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[styles.listContent, { paddingBottom: bottomPadding }]}
       />
-    </View>
+    </Animated.View>
   );
 }
 

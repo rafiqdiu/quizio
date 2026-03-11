@@ -10,10 +10,14 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Animated,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppDispatch, useAppSelector } from '../../hooks/redux';
 import { register } from '../../store/slices/authSlice';
+import { useScrollAnimation } from '../../hooks/useScrollAnimation';
+import AppPageGradient from '../../components/AppPageGradient';
 
 const PURPLE = '#5b45f6';
 const DARK_BG = '#0f2f67';
@@ -24,6 +28,8 @@ const ORANGE = '#ff7a14';
 export default function RegisterScreen({ navigation }: any) {
   const dispatch = useAppDispatch();
   const { loading, error } = useAppSelector((state) => state.auth);
+  const { onScroll, headerTranslateY, headerOpacity, contentTranslateY, contentOpacity } =
+    useScrollAnimation({ maxShift: 20, fadeDistance: 150 });
 
   const [firstName, setFirstName] = useState('');
   const [email, setEmail] = useState('');
@@ -73,10 +79,32 @@ export default function RegisterScreen({ navigation }: any) {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View style={styles.headerBackground} />
-      <View style={styles.headerCurve} />
+      <AppPageGradient />
+      <LinearGradient
+        colors={['#5b45f6', '#7c3ae5', '#5b45f6']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0.5 }}
+        style={styles.headerBackground}
+      />
+      <Animated.View
+        style={[
+          styles.headerCurve,
+          { transform: [{ translateY: headerTranslateY }], opacity: headerOpacity },
+        ]}
+      />
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <Animated.ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+      >
+        <Animated.View
+          style={[
+            styles.scrollAnimatedContent,
+            { transform: [{ translateY: contentTranslateY }], opacity: contentOpacity },
+          ]}
+        >
         <View style={styles.headerRow}>
           <TouchableOpacity style={styles.backCircle} onPress={() => navigation.goBack()}>
             <Ionicons name="chevron-back" size={22} color="#374151" />
@@ -192,6 +220,12 @@ export default function RegisterScreen({ navigation }: any) {
           onPress={handleRegister}
           disabled={loading}
         >
+          <LinearGradient
+            colors={['#ff7a14', '#ff6b2c']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={StyleSheet.absoluteFill}
+          />
           {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryButtonText}>Sign Up</Text>}
         </TouchableOpacity>
 
@@ -218,7 +252,8 @@ export default function RegisterScreen({ navigation }: any) {
           </TouchableOpacity>
           <Text style={styles.bottomText}> here</Text>
         </View>
-      </ScrollView>
+        </Animated.View>
+      </Animated.ScrollView>
     </KeyboardAvoidingView>
   );
 }
@@ -234,7 +269,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 250,
-    backgroundColor: PURPLE,
   },
   headerCurve: {
     position: 'absolute',
@@ -250,6 +284,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 54,
     paddingBottom: 26,
+  },
+  scrollAnimatedContent: {
+    flex: 1,
   },
   headerRow: {
     flexDirection: 'row',
@@ -391,7 +428,7 @@ const styles = StyleSheet.create({
   primaryButton: {
     height: 56,
     borderRadius: 28,
-    backgroundColor: ORANGE,
+    overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 18,

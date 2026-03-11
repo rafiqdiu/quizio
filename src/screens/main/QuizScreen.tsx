@@ -7,16 +7,45 @@ import {
   ActivityIndicator,
   ScrollView,
   Alert,
-  Platform,
+  Animated,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { useAppDispatch, useAppSelector } from '../../hooks/redux';
 import { fetchQuiz, saveQuizProgress, submitQuiz } from '../../store/slices/quizzesSlice';
+import { useScrollAnimation } from '../../hooks/useScrollAnimation';
+import AppPageGradient from '../../components/AppPageGradient';
+
+function twoDigit(value: number) {
+  return String(value).padStart(2, '0');
+}
+
+function resolveCorrectIndex(question: any): number | null {
+  const options = Array.isArray(question?.options) ? question.options : [];
+  const raw = question?.correct_answer ?? question?.correct_index ?? question?.answer;
+  const parsed = Number(raw);
+
+  if (!Number.isInteger(parsed)) {
+    return null;
+  }
+
+  if (parsed >= 0 && parsed < options.length) {
+    return parsed;
+  }
+
+  if (parsed >= 1 && parsed <= options.length) {
+    return parsed - 1;
+  }
+
+  return null;
+}
 
 export default function QuizScreen({ route, navigation }: any) {
   const { quizId } = route.params;
   const dispatch = useAppDispatch();
   const { currentQuiz: quiz, loading } = useAppSelector((state) => state.quizzes);
   const { token } = useAppSelector((state) => state.auth);
+  const quizQuestions = Array.isArray(quiz?.questions) ? quiz.questions : [];
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<{ [key: number]: number }>({});
@@ -25,20 +54,24 @@ export default function QuizScreen({ route, navigation }: any) {
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasAutoSubmitted, setHasAutoSubmitted] = useState(false);
+  const { onScroll, headerTranslateY, headerOpacity, contentTranslateY, contentOpacity } =
+    useScrollAnimation({ maxShift: 14, fadeDistance: 120 });
 
   useEffect(() => {
     dispatch(fetchQuiz(quizId));
   }, [dispatch, quizId]);
 
   useEffect(() => {
-    if (quiz) {
-      setCurrentQuestionIndex(0);
-      setAnswers({});
-      answersRef.current = {};
-      setTimeStarted(Date.now());
-      setTimeRemaining(Math.max(0, Number(quiz.time_limit || 0)));
-      setHasAutoSubmitted(false);
+    if (!quiz) {
+      return;
     }
+
+    setCurrentQuestionIndex(0);
+    setAnswers({});
+    answersRef.current = {};
+    setTimeStarted(Date.now());
+    setTimeRemaining(Math.max(0, Number(quiz.time_limit || 0)));
+    setHasAutoSubmitted(false);
   }, [quiz]);
 
   useEffect(() => {
@@ -102,6 +135,7 @@ export default function QuizScreen({ route, navigation }: any) {
     try {
       const startedAt = timeStarted ?? Date.now();
       const timeSpent = Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
+
       const result = await dispatch(
         submitQuiz({
           quizId,
@@ -134,30 +168,7 @@ export default function QuizScreen({ route, navigation }: any) {
       return;
     }
 
-    const answeredCount = Object.keys(answersRef.current).length;
-    const unansweredCount = quiz.questions.length - answeredCount;
-    const confirmationText =
-      unansweredCount > 0
-        ? `You still have ${unansweredCount} unanswered question(s). Submit anyway?`
-        : 'Are you sure you want to submit your quiz?';
-
-    if (Platform.OS === 'web') {
-      const confirmed = typeof window !== 'undefined' ? window.confirm(confirmationText) : true;
-      if (confirmed) {
-        void submitQuizAttempt(true);
-      }
-      return;
-    }
-
-    Alert.alert('Submit Quiz', confirmationText, [
-      { text: 'Cancel', onPress: () => {} },
-      {
-        text: 'Submit',
-        onPress: () => {
-          void submitQuizAttempt(true);
-        },
-      },
-    ]);
+    void submitQuizAttempt(true);
   };
 
   const handleNextQuestion = async () => {
@@ -165,13 +176,23 @@ export default function QuizScreen({ route, navigation }: any) {
       return;
     }
 
-    if (currentQuestionIndex < quiz.questions.length - 1) {
+    if (currentQuestionIndex < quizQuestions.length - 1) {
       await saveProgress();
       setCurrentQuestionIndex((prev) => prev + 1);
     } else {
       handleSubmitQuiz();
     }
   };
+
+  const timerText = (() => {
+    if (timeRemaining === null) {
+      return '--';
+    }
+    if (timeRemaining > 99) {
+      return `${Math.floor(timeRemaining / 60)}m`;
+    }
+    return String(timeRemaining);
+  })();
 
   if (loading || !quiz) {
     return (
@@ -181,84 +202,147 @@ export default function QuizScreen({ route, navigation }: any) {
     );
   }
 
-  const totalQuestions = quiz.questions.length;
-  const currentQuestion = quiz.questions[currentQuestionIndex];
-  const answeredCount = Object.keys(answersRef.current).length;
+  const totalQuestions = quizQuestions.length;
+  const currentQuestion = quizQuestions[currentQuestionIndex];
 
-  const questionProgress = ((currentQuestionIndex + 1) / totalQuestions) * 100;
-  const timerText =
-    timeRemaining === null
-      ? '--'
-      : timeRemaining > 99
-      ? `${Math.floor(timeRemaining / 60)}m`
-      : String(timeRemaining);
+  if (!currentQuestion || totalQuestions === 0) {
+    return (
+      <View style={styles.centerContainer}>
+        <Text style={styles.emptyText}>No questions available for this quiz.</Text>
+      </View>
+    );
+  }
+
+  const answeredCount = Object.keys(answersRef.current).length;
+  const selectedIndex = answers[currentQuestion.id];
+  const correctIndex = resolveCorrectIndex(currentQuestion);
+  const canReveal = selectedIndex !== undefined && correctIndex !== null;
+  const progress = ((currentQuestionIndex + 1) / totalQuestions) * 100;
+
   const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
 
   return (
     <View style={styles.container}>
-      <View style={styles.topHero}>
-        <View style={styles.heroGlow} />
+      <AppPageGradient />
+      <Animated.View
+        style={[
+          { transform: [{ translateY: headerTranslateY }], opacity: headerOpacity },
+        ]}
+      >
+        <LinearGradient
+          colors={['#6f4dff', '#5b45f6', '#4f39d8']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.topHero}
+        >
+          <View style={styles.topGlow} />
 
-        <View style={styles.heroStatusRow}>
-          <View style={styles.statusChipLeft}>
-            <Text style={styles.statusChipText}>Q {currentQuestionIndex + 1} of {totalQuestions}</Text>
-          </View>
+          <View style={styles.topStatusRow}>
+            <View style={styles.leftChip}>
+              <Ionicons name="person-outline" size={14} color="#6b7280" />
+              <Text style={styles.leftChipText}>
+                {currentQuestionIndex + 1} of {totalQuestions}
+              </Text>
+            </View>
 
-          <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${questionProgress}%` }]} />
-          </View>
+            <View style={styles.progressTrack}>
+              <View style={[styles.progressFill, { width: `${progress}%` }]} />
+            </View>
 
-          <View style={styles.statusChipRight}>
-            <Text style={styles.statusChipRightText}>{answeredCount} of {totalQuestions}</Text>
+            <View style={styles.rightChip}>
+              <Ionicons name="trophy-outline" size={14} color="#ffffff" />
+              <Text style={styles.rightChipText}>
+                {answeredCount} of {totalQuestions}
+              </Text>
+            </View>
           </View>
-        </View>
-      </View>
+        </LinearGradient>
+      </Animated.View>
 
       <View style={styles.mainArea}>
-        <View style={styles.questionCardWrap}>
-          <View style={styles.timerRingOuter}>
-            <View style={styles.timerRingInner}>
+        <Animated.View
+          style={[
+            styles.questionCardWrap,
+            { transform: [{ translateY: contentTranslateY }], opacity: contentOpacity },
+          ]}
+        >
+          <View style={styles.timerRing}>
+            <View style={styles.timerInner}>
               <Text style={styles.timerValue}>{timerText}</Text>
             </View>
           </View>
 
           <View style={styles.questionCard}>
             <View style={styles.hintChip}>
+              <Ionicons name="bulb-outline" size={12} color="#f97316" />
               <Text style={styles.hintText}>Hint</Text>
             </View>
 
             <Text style={styles.questionHeading}>
-              Question <Text style={styles.questionHeadingAccent}>{currentQuestionIndex + 1}</Text>
+              Question <Text style={styles.questionHeadingAccent}>{twoDigit(currentQuestionIndex + 1)}</Text>
             </Text>
-            <Text style={styles.quizLabel}>{quiz.title}</Text>
+            <Text style={styles.quizLabel}>{quiz.title || 'Sports Quiz'}</Text>
             <View style={styles.separator} />
-            <Text style={styles.questionText}>"{currentQuestion.question_text}"</Text>
+            <Text style={styles.questionText}>“{currentQuestion.question_text}”</Text>
           </View>
-        </View>
+        </Animated.View>
 
-        <ScrollView
+        <Animated.ScrollView
           style={styles.optionsScroll}
           contentContainerStyle={styles.optionsContent}
           showsVerticalScrollIndicator={false}
+          onScroll={onScroll}
+          scrollEventThrottle={16}
         >
-          {currentQuestion.options.map((option, index) => {
-            const isSelected = answers[currentQuestion.id] === index;
+          {currentQuestion.options.map((option, optionIndex) => {
+            const optionSelected = selectedIndex === optionIndex;
+            const optionCorrect = canReveal && optionIndex === correctIndex;
+            const optionWrongSelected = canReveal && optionSelected && optionIndex !== correctIndex;
+
             return (
               <TouchableOpacity
-                key={index}
-                style={[styles.optionRow, isSelected ? styles.optionRowSelected : null]}
-                onPress={() => handleAnswerSelect(currentQuestion.id, index)}
-                activeOpacity={0.9}
+                key={optionIndex}
+                style={[
+                  styles.optionRow,
+                  optionSelected ? styles.optionSelected : null,
+                  optionCorrect ? styles.optionCorrect : null,
+                  optionWrongSelected ? styles.optionWrong : null,
+                ]}
+                onPress={() => handleAnswerSelect(currentQuestion.id, optionIndex)}
                 disabled={isSubmitting}
+                activeOpacity={0.9}
               >
-                <Text style={[styles.optionText, isSelected ? styles.optionTextSelected : null]}>{option}</Text>
-                <View style={[styles.choiceCircle, isSelected ? styles.choiceCircleSelected : null]}>
-                  <Text style={styles.choiceMark}>{isSelected ? 'v' : ''}</Text>
+                <Text
+                  style={[
+                    styles.optionText,
+                    optionSelected ? styles.optionTextSelected : null,
+                    optionCorrect ? styles.optionTextCorrect : null,
+                    optionWrongSelected ? styles.optionTextWrong : null,
+                  ]}
+                >
+                  {option}
+                </Text>
+
+                <View
+                  style={[
+                    styles.optionStatusCircle,
+                    optionCorrect ? styles.optionStatusCircleCorrect : null,
+                    optionWrongSelected ? styles.optionStatusCircleWrong : null,
+                    optionSelected && !canReveal ? styles.optionStatusCircleSelected : null,
+                  ]}
+                >
+                  {optionCorrect ? (
+                    <Ionicons name="checkmark" size={16} color="#ffffff" />
+                  ) : optionWrongSelected ? (
+                    <Ionicons name="close" size={16} color="#ffffff" />
+                  ) : optionSelected ? (
+                    <Ionicons name="ellipse" size={10} color="#5b45f6" />
+                  ) : null}
                 </View>
               </TouchableOpacity>
             );
           })}
-        </ScrollView>
+        </Animated.ScrollView>
       </View>
 
       <View style={styles.footer}>
@@ -269,6 +353,12 @@ export default function QuizScreen({ route, navigation }: any) {
           }}
           disabled={isSubmitting}
         >
+          <LinearGradient
+            colors={['#5b45f6', '#6f4dff']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={StyleSheet.absoluteFill}
+          />
           <Text style={styles.nextButtonText}>
             {isSubmitting ? 'Submitting...' : isLastQuestion ? 'Submit' : 'Next'}
           </Text>
@@ -289,68 +379,77 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#edf1fb',
   },
+  emptyText: {
+    color: '#4b5563',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    paddingHorizontal: 24,
+  },
   topHero: {
-    height: 188,
-    backgroundColor: '#5b45f6',
+    height: 140,
     paddingTop: 56,
     paddingHorizontal: 16,
     overflow: 'hidden',
   },
-  heroGlow: {
+  topGlow: {
     position: 'absolute',
+    right: -60,
+    top: -120,
     width: 300,
     height: 300,
     borderRadius: 150,
     backgroundColor: 'rgba(255,255,255,0.08)',
-    top: -120,
-    right: -50,
-    transform: [{ rotate: '15deg' }],
+    transform: [{ rotate: '18deg' }],
   },
-  heroStatusRow: {
+  topStatusRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
   },
-  statusChipLeft: {
-    minWidth: 88,
+  leftChip: {
+    minWidth: 90,
     minHeight: 36,
     borderRadius: 8,
     backgroundColor: '#ffffff',
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
     paddingHorizontal: 8,
+    flexDirection: 'row',
   },
-  statusChipText: {
-    color: '#1f2937',
+  leftChipText: {
+    color: '#374151',
     fontSize: 13,
     fontWeight: '700',
+    marginLeft: 4,
   },
   progressTrack: {
     flex: 1,
     height: 8,
+    borderRadius: 8,
     marginHorizontal: 10,
-    borderRadius: 10,
     backgroundColor: 'rgba(255,255,255,0.25)',
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
+    borderRadius: 8,
     backgroundColor: '#ff7a14',
-    borderRadius: 10,
   },
-  statusChipRight: {
-    minWidth: 88,
+  rightChip: {
+    minWidth: 96,
     minHeight: 36,
     borderRadius: 8,
     backgroundColor: '#ff7a14',
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
     paddingHorizontal: 8,
+    flexDirection: 'row',
   },
-  statusChipRightText: {
+  rightChipText: {
     color: '#ffffff',
     fontSize: 13,
     fontWeight: '700',
+    marginLeft: 4,
   },
   mainArea: {
     flex: 1,
@@ -360,7 +459,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginBottom: 12,
   },
-  timerRingOuter: {
+  timerRing: {
     alignSelf: 'center',
     width: 88,
     height: 88,
@@ -369,18 +468,18 @@ const styles = StyleSheet.create({
     borderWidth: 4,
     borderColor: '#5b45f6',
     borderTopColor: '#ff7a14',
-    justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 5,
-    elevation: 4,
+    justifyContent: 'center',
+    zIndex: 3,
+    elevation: 3,
   },
-  timerRingInner: {
-    width: 66,
-    height: 66,
-    borderRadius: 33,
+  timerInner: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: '#f3f4f6',
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   timerValue: {
     color: '#1f2937',
@@ -389,8 +488,8 @@ const styles = StyleSheet.create({
   },
   questionCard: {
     marginTop: -24,
-    backgroundColor: '#ffffff',
     borderRadius: 16,
+    backgroundColor: '#ffffff',
     borderWidth: 1,
     borderColor: '#d1d5db',
     paddingTop: 30,
@@ -399,33 +498,36 @@ const styles = StyleSheet.create({
   },
   hintChip: {
     alignSelf: 'flex-start',
-    backgroundColor: '#ffedd5',
+    minHeight: 28,
     borderRadius: 6,
+    backgroundColor: '#ffedd5',
     paddingHorizontal: 10,
-    paddingVertical: 5,
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 10,
   },
   hintText: {
     color: '#f97316',
     fontSize: 12,
     fontWeight: '700',
+    marginLeft: 4,
   },
   questionHeading: {
     textAlign: 'center',
     color: '#1f2937',
-    fontSize: 32 / 2,
+    fontSize: 34 / 2,
     fontWeight: '800',
   },
   questionHeadingAccent: {
     color: '#5b45f6',
   },
   quizLabel: {
+    textAlign: 'center',
+    color: '#6b7280',
+    fontSize: 15 / 1.1,
+    fontWeight: '600',
     marginTop: 8,
     marginBottom: 12,
-    textAlign: 'center',
-    fontSize: 14,
-    color: '#6b7280',
-    fontWeight: '600',
   },
   separator: {
     height: 1,
@@ -437,7 +539,7 @@ const styles = StyleSheet.create({
     color: '#111827',
     fontSize: 34 / 2,
     fontWeight: '700',
-    lineHeight: 29,
+    lineHeight: 28,
   },
   optionsScroll: {
     flex: 1,
@@ -448,67 +550,85 @@ const styles = StyleSheet.create({
   },
   optionRow: {
     minHeight: 58,
-    backgroundColor: '#ffffff',
     borderRadius: 16,
     borderWidth: 1,
     borderColor: '#d1d5db',
-    paddingHorizontal: 16,
+    backgroundColor: '#ffffff',
     marginBottom: 12,
+    paddingHorizontal: 14,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  optionRowSelected: {
-    borderColor: '#76c27f',
-    backgroundColor: '#eef9f0',
+  optionSelected: {
+    borderColor: '#b7acef',
+    backgroundColor: '#f6f3ff',
+  },
+  optionCorrect: {
+    borderColor: '#c6e6cc',
+    backgroundColor: '#ecf9ef',
+  },
+  optionWrong: {
+    borderColor: '#fb923c',
+    backgroundColor: '#fff7ed',
   },
   optionText: {
-    color: '#1f2937',
-    fontSize: 16,
-    fontWeight: '700',
     flex: 1,
-    paddingRight: 8,
+    color: '#1f2937',
+    fontSize: 17 / 1.1,
+    fontWeight: '700',
+    marginRight: 8,
   },
   optionTextSelected: {
-    color: '#57ad62',
+    color: '#5b45f6',
   },
-  choiceCircle: {
+  optionTextCorrect: {
+    color: '#43a857',
+  },
+  optionTextWrong: {
+    color: '#f97316',
+  },
+  optionStatusCircle: {
     width: 30,
     height: 30,
     borderRadius: 15,
     borderWidth: 1,
     borderColor: '#d1d5db',
+    backgroundColor: '#ffffff',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#ffffff',
   },
-  choiceCircleSelected: {
-    backgroundColor: '#57ad62',
-    borderColor: '#57ad62',
+  optionStatusCircleSelected: {
+    borderColor: '#b7acef',
+    backgroundColor: '#ede9fe',
   },
-  choiceMark: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '800',
+  optionStatusCircleCorrect: {
+    borderColor: '#57bc69',
+    backgroundColor: '#57bc69',
+  },
+  optionStatusCircleWrong: {
+    borderColor: '#f97316',
+    backgroundColor: '#f97316',
   },
   footer: {
     paddingHorizontal: 16,
+    paddingBottom: 98,
     paddingTop: 8,
-    paddingBottom: 16,
+    marginBottom: 8,
   },
   nextButton: {
-    height: 54,
+    minHeight: 56,
     borderRadius: 28,
-    backgroundColor: '#5b45f6',
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
   },
   nextButtonDisabled: {
-    opacity: 0.6,
+    opacity: 0.75,
   },
   nextButtonText: {
     color: '#ffffff',
-    fontSize: 16,
+    fontSize: 18 / 1.1,
     fontWeight: '700',
   },
 });

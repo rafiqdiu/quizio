@@ -1,11 +1,17 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const PURPLE = '#5b45f6';
 
 export default function ResetSuccessScreen({ navigation }: any) {
   return (
-    <View style={styles.container}>
+    <LinearGradient
+      colors={['#f3f4f6', '#ede9fe', '#f3f4f6']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.container}
+    >
       <View style={styles.iconWrapOuter}>
         <View style={styles.iconWrapInner}>
           <Text style={styles.check}>v</Text>
@@ -18,9 +24,15 @@ export default function ResetSuccessScreen({ navigation }: any) {
       </Text>
 
       <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.replace('Login')}>
+        <LinearGradient
+          colors={['#ff7a14', '#ff6b2c']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={StyleSheet.absoluteFill}
+        />
         <Text style={styles.primaryButtonText}>Okey!</Text>
       </TouchableOpacity>
-    </View>
+    </LinearGradient>
   );
 }
 
@@ -36,10 +48,15 @@ const styles = StyleSheet.create({
     width: 118,
     height: 118,
     borderRadius: 59,
-    backgroundColor: '#e0e7ff',
+    backgroundColor: 'rgba(123, 58, 229, 0.15)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 6,
   },
   iconWrapInner: {
     width: 76,
@@ -72,7 +89,7 @@ const styles = StyleSheet.create({
   primaryButton: {
     height: 50,
     borderRadius: 25,
-    backgroundColor: PURPLE,
+    overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
     position: 'absolute',

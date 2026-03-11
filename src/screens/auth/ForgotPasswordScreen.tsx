@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import AppPageGradient from '../../components/AppPageGradient';
 
 const PURPLE = '#5b45f6';
 
@@ -11,7 +13,13 @@ export default function ForgotPasswordScreen({ navigation }: any) {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View style={styles.headerBackground} />
+      <AppPageGradient />
+      <LinearGradient
+        colors={['#5b45f6', '#7c3ae5', '#5b45f6']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0.5 }}
+        style={styles.headerBackground}
+      />
 
       <View style={styles.content}>
         <View style={styles.headerRow}>
@@ -46,6 +54,12 @@ export default function ForgotPasswordScreen({ navigation }: any) {
           style={styles.primaryButton}
           onPress={() => navigation.navigate('ResetPasswordCode', { email })}
         >
+          <LinearGradient
+            colors={['#ff7a14', '#ff6b2c']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={StyleSheet.absoluteFill}
+          />
           <Text style={styles.primaryButtonText}>Confirm Email</Text>
         </TouchableOpacity>
       </View>
@@ -64,7 +78,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 260,
-    backgroundColor: PURPLE,
     borderBottomLeftRadius: 36,
     borderBottomRightRadius: 36,
   },
@@ -147,7 +160,7 @@ const styles = StyleSheet.create({
   primaryButton: {
     height: 50,
     borderRadius: 25,
-    backgroundColor: PURPLE,
+    overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
   },

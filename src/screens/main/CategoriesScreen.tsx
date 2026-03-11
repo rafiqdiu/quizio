@@ -2,49 +2,84 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
-  FlatList,
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  TextInput,
+  FlatList,
+  Animated,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAppDispatch, useAppSelector } from '../../hooks/redux';
 import { fetchCategories } from '../../store/slices/quizzesSlice';
 import { logout } from '../../store/slices/authSlice';
+import { useScrollAnimation } from '../../hooks/useScrollAnimation';
+import AppPageGradient from '../../components/AppPageGradient';
 
-const PURPLE = '#5b45f6';
-const DARK_BG = '#0f2f67';
-const CARD_BG = '#2a1a76';
-const ORANGE = '#ff7a14';
+const categoryIcons = [
+  'extension-puzzle-outline',
+  'image-outline',
+  'musical-notes-outline',
+  'flask-outline',
+  'book-outline',
+  'language-outline',
+  'film-outline',
+  'calculator-outline',
+];
+
+const drawerItems = [
+  { key: 'profile', label: 'My Profile', icon: 'person-outline' },
+  { key: 'balance', label: 'Balance', icon: 'wallet-outline' },
+  { key: 'notification', label: 'Notification', icon: 'notifications-outline' },
+  { key: 'settings', label: 'Settings', icon: 'settings-outline' },
+  { key: 'master_medal', label: 'Master Medal', icon: 'ribbon-outline' },
+  { key: 'all_players', label: 'All Players', icon: 'people-outline' },
+  { key: 'about', label: 'About Us', icon: 'information-circle-outline' },
+  { key: 'play_quiz', label: 'Play Quiz', icon: 'apps-outline' },
+  { key: 'help', label: 'Help Center', icon: 'help-buoy-outline' },
+  { key: 'logout', label: 'Logout', icon: 'log-out-outline' },
+];
+
+function getInitials(name: string) {
+  const safe = String(name || '').trim();
+  if (!safe) {
+    return 'U';
+  }
+  const parts = safe.split(' ').filter(Boolean);
+  if (parts.length === 1) {
+    return parts[0].slice(0, 1).toUpperCase();
+  }
+  return `${parts[0].slice(0, 1)}${parts[1].slice(0, 1)}`.toUpperCase();
+}
 
 export default function CategoriesScreen({ navigation }: any) {
   const dispatch = useAppDispatch();
   const { categories, loading } = useAppSelector((state) => state.quizzes);
   const { user } = useAppSelector((state) => state.auth);
-
-  const [query, setQuery] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [showLogoutPrompt, setShowLogoutPrompt] = useState(false);
+  const { onScroll, headerTranslateY, headerOpacity, contentTranslateY, contentOpacity } =
+    useScrollAnimation();
 
   useEffect(() => {
     dispatch(fetchCategories());
   }, [dispatch]);
 
-  const filteredCategories = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
-
-    if (!normalized) {
+  const displayCategories = useMemo(() => {
+    if (categories.length > 0) {
       return categories;
     }
 
-    return categories.filter((item) =>
-      String(item.name || '').toLowerCase().includes(normalized)
-    );
-  }, [categories, query]);
-
-  const topCategories = filteredCategories.slice(0, 4);
-  const listCategories = filteredCategories.slice(4);
+    return [
+      { id: 1, name: 'Puzzle Quiz', total_quizzes: 140 },
+      { id: 2, name: 'Picture Quiz', total_quizzes: 140 },
+      { id: 3, name: 'Music Quiz', total_quizzes: 140 },
+      { id: 4, name: 'Science Quiz', total_quizzes: 140 },
+      { id: 5, name: 'History Quiz', total_quizzes: 140 },
+      { id: 6, name: 'Language Quiz', total_quizzes: 140 },
+      { id: 7, name: 'Movie/TV Show Quiz', total_quizzes: 140 },
+      { id: 8, name: 'Mathematics Quiz', total_quizzes: 140 },
+    ];
+  }, [categories]);
 
   const handleCategoryPress = (category: any) => {
     navigation.navigate('Quizzes', {
@@ -61,206 +96,193 @@ export default function CategoriesScreen({ navigation }: any) {
       return;
     }
 
-    if (key === 'top_members') {
+    if (key === 'all_players') {
       navigation.navigate('Leaderboard');
       return;
     }
 
     if (key === 'logout') {
-      setShowLogoutPrompt(true);
+      dispatch(logout());
     }
   };
 
-  const confirmLogout = () => {
-    setShowLogoutPrompt(false);
-    dispatch(logout());
-  };
-
-  if (loading) {
+  if (loading && categories.length === 0) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={PURPLE} />
+        <ActivityIndicator size="large" color="#5b45f6" />
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <View style={styles.hero}>
-        <View style={styles.heroGlow} />
+      <AppPageGradient />
+      <Animated.View
+        style={[
+          { transform: [{ translateY: headerTranslateY }], opacity: headerOpacity },
+        ]}
+      >
+        <LinearGradient
+          colors={['#6f4dff', '#5b45f6', '#4f39d8']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.hero}
+        >
+          <View style={styles.heroShine} />
 
-        <View style={styles.headerRow}>
-          <TouchableOpacity style={styles.circleIcon} onPress={() => setDrawerOpen(true)}>
-            <Ionicons name="menu" size={18} color="#d6d3f4" />
-          </TouchableOpacity>
-
-          <Text style={styles.brandText}>Quizio</Text>
-
-          <View style={styles.headerActionRow}>
-            <TouchableOpacity style={styles.circleIcon}>
-              <Ionicons name="notifications-outline" size={18} color="#d6d3f4" />
+          <View style={styles.headerRow}>
+            <TouchableOpacity style={styles.menuButton} onPress={() => setDrawerOpen(true)}>
+              <Ionicons name="menu" size={18} color="#6b7280" />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.circleIcon} onPress={() => navigation.navigate('Profile')}>
-              <Ionicons name="person-outline" size={18} color="#d6d3f4" />
-            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Choose Category</Text>
           </View>
-        </View>
+        </LinearGradient>
+      </Animated.View>
 
-        <View style={styles.searchRow}>
-          <View style={styles.searchWrap}>
-            <Ionicons name="search-outline" size={17} color="#9ea0be" style={styles.searchIcon} />
-            <TextInput
-              style={styles.searchInput}
-              value={query}
-              onChangeText={setQuery}
-              placeholder="Search Contest"
-              placeholderTextColor="#8e8cb5"
-            />
-          </View>
-          <TouchableOpacity style={styles.filterButton}>
-            <Ionicons name="options-outline" size={18} color="#b5b9df" />
-          </TouchableOpacity>
-        </View>
+      <Animated.View
+        style={[
+          styles.content,
+          { transform: [{ translateY: contentTranslateY }], opacity: contentOpacity },
+        ]}
+      >
+        <Animated.FlatList
+          data={displayCategories}
+          keyExtractor={(item) => item.id.toString()}
+          numColumns={2}
+          columnWrapperStyle={styles.columnWrap}
+          contentContainerStyle={styles.listContent}
+          onScroll={onScroll}
+          scrollEventThrottle={16}
+          showsVerticalScrollIndicator={false}
+          nestedScrollEnabled
+          keyboardShouldPersistTaps="handled"
+          renderItem={({ item, index }) => {
+            const active = index === 0;
+            const iconName = categoryIcons[index % categoryIcons.length];
+            return (
+              <TouchableOpacity
+                style={[styles.card, active ? styles.cardActive : null]}
+                onPress={() => handleCategoryPress(item)}
+                activeOpacity={0.9}
+              >
+                <View style={[styles.iconCircle, active ? styles.iconCircleActive : null]}>
+                  {iconName === 'language-outline' ? (
+                    <MaterialCommunityIcons
+                      name="translate"
+                      size={20}
+                      color={active ? '#ff7a14' : '#6b7280'}
+                    />
+                  ) : (
+                    <Ionicons name={iconName as any} size={20} color={active ? '#ff7a14' : '#6b7280'} />
+                  )}
+                </View>
 
-        <Text style={styles.sectionHeader}>Browse By Category</Text>
-
-        <View style={styles.topCategoryRow}>
-          {topCategories.map((item) => (
-            <TouchableOpacity key={item.id} style={styles.topCategoryItem} onPress={() => handleCategoryPress(item)}>
-              <View style={styles.topCategoryCircle}>
-                <Text style={styles.topCategoryIcon}>{String(item.icon || item.name?.charAt(0) || 'Q').slice(0, 1)}</Text>
-              </View>
-              <Text style={styles.topCategoryLabel} numberOfLines={2}>{item.name}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-
-      <FlatList
-        data={listCategories}
-        keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={styles.listContent}
-        ListHeaderComponent={
-          <View>
-            <View style={styles.inviteCard}>
-              <View style={styles.inviteTextWrap}>
-                <Text style={styles.inviteTitle}>Invite Friends</Text>
-                <Text style={styles.inviteAmount}>$80</Text>
-                <Text style={styles.inviteSub}>Earn Up To</Text>
-              </View>
-              <View style={styles.inviteArtwork}>
-                <Text style={styles.inviteArtworkText}>INVITE</Text>
-              </View>
-            </View>
-
-            <View style={styles.listHeaderRow}>
-              <Text style={styles.listHeaderTitle}>Contest</Text>
-              <TouchableOpacity><Text style={styles.listHeaderAction}>See All</Text></TouchableOpacity>
-            </View>
-          </View>
-        }
-        renderItem={({ item }) => (
-          <TouchableOpacity style={styles.categoryListCard} onPress={() => handleCategoryPress(item)}>
-            <View style={styles.categoryListIcon}><Text style={styles.categoryListIconText}>{String(item.icon || item.name?.charAt(0) || 'Q').slice(0, 1)}</Text></View>
-            <View style={styles.categoryListTextWrap}>
-              <Text style={styles.categoryListName}>{item.name}</Text>
-              <Text style={styles.categoryListMeta}>Que: {item.total_quizzes || 0}</Text>
-            </View>
-            <Text style={styles.categoryListArrow}>{'>'}</Text>
-          </TouchableOpacity>
-        )}
-        ListEmptyComponent={
-          <View style={styles.emptyWrap}>
-            <Text style={styles.emptyTitle}>No categories found</Text>
-          </View>
-        }
-      />
+                <View style={styles.cardTextWrap}>
+                  <Text style={[styles.cardTitle, active ? styles.cardTitleActive : null]} numberOfLines={2}>
+                    {item.name}
+                  </Text>
+                  <Text style={[styles.cardMeta, active ? styles.cardMetaActive : null]}>
+                    Que:{item.total_quizzes || 140}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            );
+          }}
+        />
+      </Animated.View>
 
       {drawerOpen && (
         <View style={styles.overlay}>
           <TouchableOpacity style={styles.overlayTouch} onPress={() => setDrawerOpen(false)} />
 
           <View style={styles.drawerPanel}>
-            <View style={styles.drawerTop}>
+            <LinearGradient
+              colors={['#6f4dff', '#5b45f6', '#4f39d8']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.drawerTop}
+            >
+              <TouchableOpacity style={styles.drawerClose} onPress={() => setDrawerOpen(false)}>
+                <Ionicons name="close" size={20} color="#ff8f39" />
+              </TouchableOpacity>
+
               <View style={styles.drawerUserRow}>
-                <View style={styles.drawerAvatar}><Text style={styles.drawerAvatarText}>U</Text></View>
+                <View style={styles.drawerAvatarRing}>
+                  <View style={styles.drawerAvatar}>
+                    <Text style={styles.drawerAvatarText}>{getInitials(user?.name || 'Jhon Smith')}</Text>
+                  </View>
+                </View>
+
                 <View style={styles.drawerUserTextWrap}>
                   <Text style={styles.drawerName}>{user?.name || 'Jhon Smith'}</Text>
-                  <Text style={styles.drawerId}>ID: 6546354651</Text>
+                  <Text style={styles.drawerId}>ID : 6546354651</Text>
                 </View>
-                <TouchableOpacity style={styles.drawerClose} onPress={() => setDrawerOpen(false)}>
-                  <Ionicons name="close" size={20} color="#fbbf24" />
-                </TouchableOpacity>
               </View>
+
+              <View style={styles.drawerTopDivider} />
 
               <View style={styles.drawerStatsRow}>
                 <View style={styles.drawerStatBlock}>
-                  <Text style={styles.drawerStatLabel}>Rank</Text>
-                  <Text style={styles.drawerStatValue}>420</Text>
+                  <View style={styles.drawerStatIconCircle}>
+                    <Ionicons name="stats-chart" size={16} color="#111827" />
+                  </View>
+                  <View>
+                    <Text style={styles.drawerStatLabel}>Rank</Text>
+                    <Text style={styles.drawerStatValue}>420</Text>
+                  </View>
                 </View>
+
                 <View style={styles.drawerStatDivider} />
+
                 <View style={styles.drawerStatBlock}>
-                  <Text style={styles.drawerStatLabel}>Quizio Coin Earned</Text>
-                  <Text style={styles.drawerStatValue}>20</Text>
+                  <View style={styles.drawerStatIconCircle}>
+                    <Ionicons name="albums-outline" size={16} color="#111827" />
+                  </View>
+                  <View>
+                    <Text style={styles.drawerStatLabel}>Quizio Coin Earned</Text>
+                    <Text style={styles.drawerStatValue}>20</Text>
+                  </View>
                 </View>
               </View>
-            </View>
+
+              <Text style={styles.drawerCurrentMonth}>* Current Month</Text>
+            </LinearGradient>
 
             <TouchableOpacity style={styles.drawerUpgradeRow}>
-              <Text style={styles.drawerUpgradeText}>Upgrade to Premium</Text>
-              <Text style={styles.drawerArrow}>{'>'}</Text>
+              <View style={styles.drawerUpgradeLeft}>
+                <View style={styles.drawerUpgradeIcon}>
+                  <Ionicons name="ribbon-outline" size={16} color="#ff7a14" />
+                </View>
+                <Text style={styles.drawerUpgradeText}>Upgrade to Primium</Text>
+              </View>
+              <Ionicons name="arrow-forward" size={20} color="#111827" />
             </TouchableOpacity>
 
-            <View style={styles.drawerMenuWrap}>
-              {[
-                ['profile', 'My Profile'],
-                ['balance', 'Balance'],
-                ['notification', 'Notification'],
-                ['settings', 'Settings'],
-                ['master_medal', 'Master Medal'],
-                ['all_players', 'All Players'],
-                ['about', 'About Us'],
-                ['play_quiz', 'Play Quiz'],
-                ['help', 'Help Center'],
-                ['top_members', 'Top Members'],
-                ['logout', 'Logout'],
-              ].map(([key, label]) => (
-                <TouchableOpacity key={key} style={styles.drawerMenuRow} onPress={() => handleDrawerItem(key)}>
-                  <Text style={styles.drawerMenuText}>{label}</Text>
-                  <Text style={styles.drawerArrow}>{'>'}</Text>
+            <FlatList
+              data={drawerItems}
+              keyExtractor={(item) => item.key}
+              style={styles.drawerList}
+              renderItem={({ item }) => (
+                <TouchableOpacity style={styles.drawerMenuRow} onPress={() => handleDrawerItem(item.key)}>
+                  <View style={styles.drawerMenuLeft}>
+                    <View style={styles.drawerMenuIconCircle}>
+                      <Ionicons name={item.icon as any} size={17} color="#ff8f39" />
+                    </View>
+                    <Text style={styles.drawerMenuText}>{item.label}</Text>
+                  </View>
+
+                  <Ionicons name="arrow-forward" size={19} color="#ff8f39" />
                 </TouchableOpacity>
-              ))}
-            </View>
+              )}
+            />
 
             <View style={styles.drawerFooter}>
               <Text style={styles.drawerFooterText}>Rate this App</Text>
-              <View style={styles.drawerFooterStars}>
-                <Ionicons name="star-outline" size={20} color="#fef08a" />
-                <Ionicons name="star" size={20} color="#fef08a" />
-                <Ionicons name="star" size={20} color="#fef08a" />
+              <View style={styles.drawerStarsRow}>
+                <Ionicons name="star-outline" size={22} color="#facc15" />
+                <Ionicons name="star" size={22} color="#facc15" />
+                <Ionicons name="star" size={22} color="#facc15" />
               </View>
-            </View>
-          </View>
-        </View>
-      )}
-
-      {showLogoutPrompt && (
-        <View style={styles.overlay}>
-          <TouchableOpacity style={styles.overlayTouch} onPress={() => setShowLogoutPrompt(false)} />
-
-          <View style={styles.logoutSheet}>
-            <Text style={styles.logoutTitle}>Log Out</Text>
-            <View style={styles.logoutDivider} />
-            <Text style={styles.logoutMessage}>Are you sure you want to log out?</Text>
-
-            <View style={styles.logoutButtonsRow}>
-              <TouchableOpacity style={styles.cancelButton} onPress={() => setShowLogoutPrompt(false)}>
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.confirmButton} onPress={confirmLogout}>
-                <Text style={styles.confirmButtonText}>Yes, Logout</Text>
-              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -272,277 +294,167 @@ export default function CategoriesScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: DARK_BG,
+    backgroundColor: '#edf1fb',
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: DARK_BG,
+    backgroundColor: '#edf1fb',
   },
   hero: {
-    backgroundColor: PURPLE,
     paddingTop: 54,
     paddingHorizontal: 16,
-    paddingBottom: 20,
-    borderBottomLeftRadius: 120,
-    borderBottomRightRadius: 120,
+    paddingBottom: 34,
+    borderBottomLeftRadius: 130,
+    borderBottomRightRadius: 130,
     overflow: 'hidden',
   },
-  heroGlow: {
+  heroShine: {
     position: 'absolute',
-    width: 320,
-    height: 320,
-    borderRadius: 160,
-    right: -120,
-    top: -180,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    transform: [{ rotate: '16deg' }],
+    right: -48,
+    top: -90,
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    backgroundColor: 'rgba(255,255,255,0.09)',
+    transform: [{ rotate: '18deg' }],
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 14,
   },
-  headerActionRow: {
-    flexDirection: 'row',
-  },
-  circleIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.16)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.26)',
+  menuButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#ffffff',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 8,
+    marginRight: 12,
   },
-  brandText: {
-    flex: 1,
-    color: '#f3f4f6',
-    fontSize: 22 / 1.1,
+  headerTitle: {
+    color: '#ffffff',
+    fontSize: 42 / 2,
     fontWeight: '800',
   },
-  searchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 14,
-  },
-  searchWrap: {
+  content: {
     flex: 1,
-    minHeight: 48,
-    borderRadius: 24,
-    backgroundColor: '#412fad',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    marginRight: 10,
-  },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
-    color: '#fff',
-    fontSize: 15,
-  },
-  filterButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#412fad',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sectionHeader: {
-    color: '#dbeafe',
-    fontSize: 32 / 2,
-    fontWeight: '700',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  topCategoryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  topCategoryItem: {
-    width: '24%',
-    alignItems: 'center',
-  },
-  topCategoryCircle: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    backgroundColor: '#dbeafe',
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.24)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
-  topCategoryIcon: {
-    color: '#1f2937',
-    fontWeight: '800',
-    fontSize: 18,
-  },
-  topCategoryLabel: {
-    color: '#e5e7eb',
-    textAlign: 'center',
-    fontSize: 13,
-    fontWeight: '600',
+    marginTop: -6,
+    borderTopLeftRadius: 42,
+    borderTopRightRadius: 42,
+    backgroundColor: '#edf1fb',
+    paddingTop: 16,
   },
   listContent: {
-    padding: 16,
+    paddingHorizontal: 16,
     paddingBottom: 120,
   },
-  inviteCard: {
-    minHeight: 144,
-    borderRadius: 18,
-    backgroundColor: CARD_BG,
-    marginBottom: 16,
-    padding: 16,
-    flexDirection: 'row',
+  columnWrap: {
     justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  card: {
+    width: '48.3%',
+    minHeight: 108,
+    borderRadius: 10,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    padding: 10,
+  },
+  cardActive: {
+    backgroundColor: '#ff7a14',
+    borderColor: '#ff7a14',
+  },
+  iconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#eef2ff',
     alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
   },
-  inviteTextWrap: {
+  iconCircleActive: {
+    backgroundColor: '#ffffff',
+  },
+  cardTextWrap: {
     flex: 1,
+    justifyContent: 'space-between',
   },
-  inviteTitle: {
-    color: '#d6d3f4',
-    fontSize: 18,
+  cardTitle: {
+    color: '#1f2937',
+    fontSize: 16 / 1.1,
     fontWeight: '700',
     marginBottom: 6,
   },
-  inviteAmount: {
-    color: '#f3f4f6',
-    fontSize: 56 / 2,
-    fontWeight: '800',
-    marginBottom: 2,
+  cardTitleActive: {
+    color: '#ffffff',
   },
-  inviteSub: {
-    color: '#d6d3f4',
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  inviteArtwork: {
-    width: 118,
-    height: 96,
-    borderRadius: 12,
-    backgroundColor: '#3f2f9d',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  inviteArtworkText: {
-    color: '#d6d3f4',
-    fontWeight: '800',
-  },
-  listHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  listHeaderTitle: {
-    color: '#f3f4f6',
-    fontSize: 18,
-    fontWeight: '800',
-  },
-  listHeaderAction: {
-    color: ORANGE,
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  categoryListCard: {
-    minHeight: 64,
-    borderRadius: 14,
-    backgroundColor: '#ffffff',
-    marginBottom: 10,
-    paddingHorizontal: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  categoryListIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: '#ede9fe',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 10,
-  },
-  categoryListIconText: {
+  cardMeta: {
     color: '#5b45f6',
-    fontSize: 14,
-    fontWeight: '800',
+    fontSize: 14 / 1.1,
+    fontWeight: '600',
   },
-  categoryListTextWrap: {
-    flex: 1,
-  },
-  categoryListName: {
-    color: '#1f2937',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  categoryListMeta: {
-    color: '#6b7280',
-    fontSize: 13,
-    marginTop: 2,
-  },
-  categoryListArrow: {
-    color: '#9ca3af',
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  emptyWrap: {
-    paddingVertical: 20,
-    alignItems: 'center',
-  },
-  emptyTitle: {
-    color: '#f3f4f6',
-    fontSize: 16,
-    fontWeight: '700',
+  cardMetaActive: {
+    color: '#ffe7d0',
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(9,11,32,0.62)',
   },
   overlayTouch: {
     ...StyleSheet.absoluteFillObject,
   },
   drawerPanel: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: '78%',
-    backgroundColor: '#111214',
+    width: '80%',
+    height: '100%',
+    backgroundColor: '#0f0f12',
   },
   drawerTop: {
-    backgroundColor: PURPLE,
-    paddingTop: 46,
-    paddingHorizontal: 14,
+    paddingTop: 44,
+    paddingHorizontal: 16,
     paddingBottom: 16,
+  },
+  drawerClose: {
+    position: 'absolute',
+    right: 12,
+    top: 44,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1,
+    borderColor: '#ff8f39',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   drawerUserRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
   },
-  drawerAvatar: {
-    width: 62,
-    height: 62,
-    borderRadius: 31,
-    backgroundColor: '#f3f4f6',
+  drawerAvatarRing: {
+    width: 74,
+    height: 74,
+    borderRadius: 37,
+    borderWidth: 2,
+    borderColor: '#ff8f39',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 10,
+    marginRight: 12,
+  },
+  drawerAvatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#4b5563',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   drawerAvatarText: {
-    color: '#374151',
-    fontSize: 18,
+    color: '#ffffff',
+    fontSize: 22,
     fontWeight: '800',
   },
   drawerUserTextWrap: {
@@ -550,159 +462,136 @@ const styles = StyleSheet.create({
   },
   drawerName: {
     color: '#ffffff',
-    fontSize: 16,
+    fontSize: 22 / 1.1,
     fontWeight: '800',
     marginBottom: 4,
   },
   drawerId: {
-    color: '#d6d3f4',
-    fontSize: 13,
+    color: '#ddd6fe',
+    fontSize: 16 / 1.1,
+    fontWeight: '600',
   },
-  drawerClose: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#fbbf24',
-    alignItems: 'center',
-    justifyContent: 'center',
+  drawerTopDivider: {
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.25)',
+    borderStyle: 'dashed',
+    marginBottom: 10,
   },
   drawerStatsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.25)',
-    paddingTop: 10,
   },
   drawerStatBlock: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  drawerStatIconCircle: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#ff7a14',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
   },
   drawerStatDivider: {
     width: 1,
     height: 46,
     backgroundColor: 'rgba(255,255,255,0.4)',
-    marginHorizontal: 10,
+    marginHorizontal: 12,
   },
   drawerStatLabel: {
-    color: '#ddd6fe',
-    fontSize: 13,
-    marginBottom: 4,
+    color: '#ffffff',
+    fontSize: 15 / 1.1,
+    marginBottom: 2,
   },
   drawerStatValue: {
     color: '#ffffff',
-    fontSize: 28 / 2,
+    fontSize: 38 / 2,
     fontWeight: '800',
   },
+  drawerCurrentMonth: {
+    alignSelf: 'flex-end',
+    marginTop: 6,
+    color: '#ffb05f',
+    fontSize: 14 / 1.1,
+    fontWeight: '600',
+  },
   drawerUpgradeRow: {
-    minHeight: 64,
-    backgroundColor: ORANGE,
+    minHeight: 62,
+    backgroundColor: '#ff7a14',
     paddingHorizontal: 16,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  drawerUpgradeLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  drawerUpgradeIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#fff7ed',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
   },
   drawerUpgradeText: {
     color: '#111827',
-    fontSize: 20 / 1.1,
+    fontSize: 22 / 1.1,
     fontWeight: '800',
   },
-  drawerArrow: {
-    color: ORANGE,
-    fontSize: 22,
-    fontWeight: '700',
-  },
-  drawerMenuWrap: {
+  drawerList: {
     flex: 1,
   },
   drawerMenuRow: {
-    minHeight: 56,
+    minHeight: 66,
     borderBottomWidth: 1,
     borderBottomColor: '#2f2f35',
-    paddingHorizontal: 16,
+    borderStyle: 'dashed',
+    paddingHorizontal: 14,
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  drawerMenuLeft: {
+    flexDirection: 'row',
     alignItems: 'center',
   },
+  drawerMenuIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#7c2d12',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
   drawerMenuText: {
-    color: '#f3f4f6',
-    fontSize: 20 / 1.1,
+    color: '#f9fafb',
+    fontSize: 36 / 2,
     fontWeight: '700',
   },
   drawerFooter: {
-    minHeight: 58,
-    backgroundColor: ORANGE,
+    minHeight: 64,
+    backgroundColor: '#ff7a14',
     paddingHorizontal: 16,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
   drawerFooterText: {
     color: '#111827',
-    fontSize: 30 / 2,
+    fontSize: 34 / 2,
     fontWeight: '700',
   },
-  drawerFooterStars: {
+  drawerStarsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-  },
-  logoutSheet: {
-    marginHorizontal: 12,
-    marginBottom: 20,
-    borderRadius: 20,
-    backgroundColor: '#111214',
-    padding: 20,
-  },
-  logoutTitle: {
-    color: ORANGE,
-    fontSize: 46 / 2,
-    fontWeight: '800',
-    textAlign: 'center',
-    marginBottom: 14,
-  },
-  logoutDivider: {
-    height: 1,
-    borderStyle: 'dashed',
-    borderWidth: 1,
-    borderColor: '#3f3f46',
-    marginBottom: 14,
-  },
-  logoutMessage: {
-    color: '#ffffff',
-    fontSize: 20 / 1.1,
-    textAlign: 'center',
-    marginBottom: 18,
-  },
-  logoutButtonsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  cancelButton: {
-    width: '48%',
-    minHeight: 52,
-    borderRadius: 26,
-    borderWidth: 1,
-    borderColor: '#7c2d12',
-    backgroundColor: '#2b1e19',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cancelButtonText: {
-    color: ORANGE,
-    fontSize: 20 / 1.1,
-    fontWeight: '700',
-  },
-  confirmButton: {
-    width: '48%',
-    minHeight: 52,
-    borderRadius: 26,
-    backgroundColor: ORANGE,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  confirmButtonText: {
-    color: '#111827',
-    fontSize: 20 / 1.1,
-    fontWeight: '800',
   },
 });

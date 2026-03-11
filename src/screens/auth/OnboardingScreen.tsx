@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useMemo, useState, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 
 const slides = [
@@ -15,20 +16,34 @@ const slides = [
 
 export default function OnboardingScreen({ navigation }: any) {
   const [index, setIndex] = useState(0);
+  const slideAnim = useRef(new Animated.Value(0)).current;
   const slide = useMemo(() => slides[index], [index]);
   const isLast = index === slides.length - 1;
 
   const handleNext = () => {
-    if (isLast) {
-      navigation.replace('Login');
-      return;
-    }
-
-    setIndex((prev) => prev + 1);
+    Animated.timing(slideAnim, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      slideAnim.setValue(0);
+      if (isLast) {
+        navigation.replace('Login');
+        return;
+      }
+      setIndex((prev) => prev + 1);
+    });
   };
 
+
+
   return (
-    <View style={styles.container}>
+    <LinearGradient
+      colors={['#f4f6ff', '#eef2ff', '#ede9fe']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.container}
+    >
       <View style={styles.topGraphic}>
         <View style={styles.planet} />
 
@@ -64,6 +79,12 @@ export default function OnboardingScreen({ navigation }: any) {
           style={[styles.nextButton, isLast ? styles.nextButtonWide : null]}
           onPress={handleNext}
         >
+          <LinearGradient
+            colors={['#5b45f6', '#7c3ae5']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
           {isLast ? (
             <Text style={styles.nextText}>Get Started</Text>
           ) : (
@@ -71,7 +92,7 @@ export default function OnboardingScreen({ navigation }: any) {
           )}
         </TouchableOpacity>
       </View>
-    </View>
+    </LinearGradient>
   );
 }
 
@@ -95,6 +116,11 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     borderWidth: 36,
     borderColor: '#9aaaf0',
+    shadowColor: '#7b66f5',
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.3,
+    shadowRadius: 30,
+    elevation: 12,
   },
   avatar: {
     position: 'absolute',
@@ -216,14 +242,24 @@ const styles = StyleSheet.create({
     width: 92,
     height: 92,
     borderRadius: 46,
-    backgroundColor: '#5b45f6',
+    overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#5b45f6',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    elevation: 8,
   },
   nextButtonWide: {
     width: 196,
     height: 80,
     borderRadius: 40,
+    shadowColor: '#5b45f6',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
   },
   nextText: {
     color: '#ffffff',

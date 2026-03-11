@@ -6,14 +6,23 @@ import {
   StyleSheet,
   ActivityIndicator,
   TouchableOpacity,
+  Platform,
+  Animated,
 } from 'react-native';
 import { useAppDispatch, useAppSelector } from '../../hooks/redux';
 import { fetchUserAttempts } from '../../store/slices/quizzesSlice';
+import { useScrollAnimation } from '../../hooks/useScrollAnimation';
+import AppPageGradient from '../../components/AppPageGradient';
 
 export default function HistoryScreen({ navigation }: any) {
   const dispatch = useAppDispatch();
   const { userAttempts: attempts, loading } = useAppSelector((state) => state.quizzes);
   const { token } = useAppSelector((state) => state.auth);
+  const bottomPadding = Platform.OS === 'web' ? 24 : 120;
+  const { onScroll, contentTranslateY, contentOpacity } = useScrollAnimation({
+    maxShift: 16,
+    fadeDistance: 180,
+  });
 
   useEffect(() => {
     if (token) {
@@ -36,10 +45,21 @@ export default function HistoryScreen({ navigation }: any) {
   };
 
   return (
-    <View style={styles.container}>
-      <FlatList
+    <Animated.View
+      style={[
+        styles.container,
+        { transform: [{ translateY: contentTranslateY }], opacity: contentOpacity },
+      ]}
+    >
+      <AppPageGradient />
+      <Animated.FlatList
         data={attempts}
         keyExtractor={(item) => item.id.toString()}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        showsVerticalScrollIndicator
+        nestedScrollEnabled
+        keyboardShouldPersistTaps="handled"
         renderItem={({ item }) => {
           const percentage = getPercentage(item);
           const passed = percentage >= 50;
@@ -70,7 +90,7 @@ export default function HistoryScreen({ navigation }: any) {
             </TouchableOpacity>
           );
         }}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[styles.listContent, { paddingBottom: bottomPadding }]}
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <Text style={styles.emptyText}>No attempts yet</Text>
@@ -78,7 +98,7 @@ export default function HistoryScreen({ navigation }: any) {
           </View>
         }
       />
-    </View>
+    </Animated.View>
   );
 }
 
@@ -94,6 +114,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f1f5f9',
   },
   listContent: {
+    flexGrow: 1,
     padding: 16,
   },
   attemptCard: {
