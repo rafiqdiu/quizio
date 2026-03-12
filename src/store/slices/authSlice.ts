@@ -7,6 +7,10 @@ interface User {
   id: number;
   name: string;
   email: string;
+  status?: number;
+  phone?: string | null;
+  avatar?: string | null;
+  gender?: 'male' | 'female' | null;
   total_score: number;
   quizzes_completed: number;
 }
@@ -30,7 +34,18 @@ const initialState: AuthState = {
 // Async thunks
 export const register = createAsyncThunk(
   'auth/register',
-  async (credentials: { name: string; email: string; password: string; password_confirmation: string }, { rejectWithValue }) => {
+  async (
+    credentials: {
+      name: string;
+      email: string;
+      password: string;
+      password_confirmation: string;
+      gender?: 'male' | 'female';
+      phone?: string | null;
+      avatar?: string | null;
+    },
+    { rejectWithValue }
+  ) => {
     try {
       const response = await axios.post(`${API_BASE_URL}/register`, credentials);
       return response.data;

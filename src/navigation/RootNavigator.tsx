@@ -27,6 +27,7 @@ import LeaderboardScreen from '../screens/main/LeaderboardScreen';
 import ProfileScreen from '../screens/main/ProfileScreen';
 import HistoryScreen from '../screens/main/HistoryScreen';
 import HistoryDetailsScreen from '../screens/main/HistoryDetailsScreen';
+import DrawerItemScreen from '../screens/main/DrawerItemScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -150,6 +151,56 @@ function CategoriesNavigator() {
         name="Results"
         component={ResultsScreen}
         options={{ title: 'Quiz Results', headerLeft: () => null }}
+      />
+      <Stack.Screen
+        name="Notification"
+        component={DrawerItemScreen}
+        initialParams={{
+          title: 'Notification',
+          icon: 'notifications-outline',
+          description: 'View notification updates, reminders, and quiz alerts.',
+        }}
+        options={{ title: 'Notification' }}
+      />
+      <Stack.Screen
+        name="Settings"
+        component={DrawerItemScreen}
+        initialParams={{
+          title: 'Settings',
+          icon: 'settings-outline',
+          description: 'Manage account preferences and app behavior from this page.',
+        }}
+        options={{ title: 'Settings' }}
+      />
+      <Stack.Screen
+        name="AboutUs"
+        component={DrawerItemScreen}
+        initialParams={{
+          title: 'About Us',
+          icon: 'information-circle-outline',
+          description: 'Learn about the app vision, team, and update roadmap.',
+        }}
+        options={{ title: 'About Us' }}
+      />
+      <Stack.Screen
+        name="PlayQuiz"
+        component={DrawerItemScreen}
+        initialParams={{
+          title: 'Play Quiz',
+          icon: 'apps-outline',
+          description: 'Start a new challenge and improve your leaderboard position.',
+        }}
+        options={{ title: 'Play Quiz' }}
+      />
+      <Stack.Screen
+        name="HelpCenter"
+        component={DrawerItemScreen}
+        initialParams={{
+          title: 'Help Center',
+          icon: 'help-buoy-outline',
+          description: 'Get support, FAQs, and troubleshooting resources.',
+        }}
+        options={{ title: 'Help Center' }}
       />
     </Stack.Navigator>
   );

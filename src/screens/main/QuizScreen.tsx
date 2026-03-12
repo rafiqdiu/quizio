@@ -15,6 +15,7 @@ import { useAppDispatch, useAppSelector } from '../../hooks/redux';
 import { fetchQuiz, saveQuizProgress, submitQuiz } from '../../store/slices/quizzesSlice';
 import { useScrollAnimation } from '../../hooks/useScrollAnimation';
 import AppPageGradient from '../../components/AppPageGradient';
+import AnimatedGradientButton from '../../components/AnimatedGradientButton';
 
 function twoDigit(value: number) {
   return String(value).padStart(2, '0');
@@ -346,23 +347,18 @@ export default function QuizScreen({ route, navigation }: any) {
       </View>
 
       <View style={styles.footer}>
-        <TouchableOpacity
-          style={[styles.nextButton, isSubmitting ? styles.nextButtonDisabled : null]}
+        <AnimatedGradientButton
+          title={isLastQuestion ? 'Submit' : 'Next'}
+          loading={isSubmitting}
+          loadingText="Submitting..."
           onPress={() => {
             void handleNextQuestion();
           }}
           disabled={isSubmitting}
-        >
-          <LinearGradient
-            colors={['#5b45f6', '#6f4dff']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={StyleSheet.absoluteFill}
-          />
-          <Text style={styles.nextButtonText}>
-            {isSubmitting ? 'Submitting...' : isLastQuestion ? 'Submit' : 'Next'}
-          </Text>
-        </TouchableOpacity>
+          style={[styles.nextButton, isSubmitting ? styles.nextButtonDisabled : null]}
+          textStyle={styles.nextButtonText}
+          gradientColors={['#5b45f6', '#6f4dff', '#7b5cff']}
+        />
       </View>
     </View>
   );

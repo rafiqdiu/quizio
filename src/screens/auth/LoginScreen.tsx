@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -18,6 +17,7 @@ import { useAppDispatch, useAppSelector } from '../../hooks/redux';
 import { login } from '../../store/slices/authSlice';
 import { useScrollAnimation } from '../../hooks/useScrollAnimation';
 import AppPageGradient from '../../components/AppPageGradient';
+import AnimatedGradientButton from '../../components/AnimatedGradientButton';
 
 const PURPLE = '#5b45f6';
 const DARK_BG = '#0f2f67';
@@ -134,19 +134,15 @@ export default function LoginScreen({ navigation }: any) {
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
         </View>
 
-        <TouchableOpacity
-          style={[styles.primaryButton, loading ? styles.buttonDisabled : null]}
+        <AnimatedGradientButton
+          title="Sign In"
+          loading={loading}
+          loadingText="Signing In..."
           onPress={handleLogin}
-          disabled={loading}
-        >
-          <LinearGradient
-            colors={['#ff7a14', '#ff6b2c']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={StyleSheet.absoluteFill}
-          />
-          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryButtonText}>Sign In</Text>}
-        </TouchableOpacity>
+          style={styles.primaryButton}
+          textStyle={styles.primaryButtonText}
+          gradientColors={['#ff7a14', '#ff8f1f', '#ff6b2c']}
+        />
 
         <View style={styles.dividerRow}>
           <View style={styles.divider} />
@@ -310,9 +306,6 @@ const styles = StyleSheet.create({
     color: '#111827',
     fontSize: 20 / 1.1,
     fontWeight: '800',
-  },
-  buttonDisabled: {
-    opacity: 0.75,
   },
   dividerRow: {
     flexDirection: 'row',

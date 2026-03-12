@@ -5,6 +5,9 @@ import { API_BASE_URL } from '../../config/api';
 interface LeaderboardEntry {
   id: number;
   name: string;
+  gender?: 'male' | 'female' | null;
+  avatar?: string | null;
+  avatar_url?: string | null;
   total_score: number;
   quizzes_completed: number;
   rank: number;
@@ -32,9 +35,18 @@ const initialState: LeaderboardState = {
 
 export const fetchLeaderboard = createAsyncThunk(
   'leaderboard/fetchLeaderboard',
-  async (_, { rejectWithValue }) => {
+  async (
+    params: { period?: 'today' | 'weekly' | 'all'; limit?: number } = {},
+    { rejectWithValue }
+  ) => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/leaderboard`);
+      const safeLimit = Math.min(Math.max(params.limit ?? 50, 1), 50);
+      const response = await axios.get(`${API_BASE_URL}/leaderboard`, {
+        params: {
+          period: params.period ?? 'all',
+          limit: safeLimit,
+        },
+      });
       return response.data.leaderboard;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch leaderboard');

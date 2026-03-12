@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   FlatList,
   Animated,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -29,12 +30,9 @@ const categoryIcons = [
 
 const drawerItems = [
   { key: 'profile', label: 'My Profile', icon: 'person-outline' },
-  { key: 'balance', label: 'Balance', icon: 'wallet-outline' },
   { key: 'notification', label: 'Notification', icon: 'notifications-outline' },
   { key: 'settings', label: 'Settings', icon: 'settings-outline' },
-  { key: 'master_medal', label: 'Master Medal', icon: 'ribbon-outline' },
-  { key: 'all_players', label: 'All Players', icon: 'people-outline' },
-  { key: 'about', label: 'About Us', icon: 'information-circle-outline' },
+  // { key: 'about', label: 'About Us', icon: 'information-circle-outline' },
   { key: 'play_quiz', label: 'Play Quiz', icon: 'apps-outline' },
   { key: 'help', label: 'Help Center', icon: 'help-buoy-outline' },
   { key: 'logout', label: 'Logout', icon: 'log-out-outline' },
@@ -57,6 +55,8 @@ export default function CategoriesScreen({ navigation }: any) {
   const { categories, loading } = useAppSelector((state) => state.quizzes);
   const { user } = useAppSelector((state) => state.auth);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [showLogoutPrompt, setShowLogoutPrompt] = useState(false);
+  const bottomPadding = Platform.OS === 'web' ? 24 : 120;
   const { onScroll, headerTranslateY, headerOpacity, contentTranslateY, contentOpacity } =
     useScrollAnimation();
 
@@ -90,20 +90,46 @@ export default function CategoriesScreen({ navigation }: any) {
 
   const handleDrawerItem = (key: string) => {
     setDrawerOpen(false);
+    const tabNavigation = navigation.getParent?.();
 
     if (key === 'profile') {
-      navigation.navigate('Profile');
+      tabNavigation?.navigate?.('Profile');
       return;
     }
 
-    if (key === 'all_players') {
-      navigation.navigate('Leaderboard');
+    if (key === 'notification') {
+      navigation.navigate('Notification');
+      return;
+    }
+
+    if (key === 'settings') {
+      navigation.navigate('Settings');
+      return;
+    }
+
+    if (key === 'about') {
+      navigation.navigate('AboutUs');
+      return;
+    }
+
+    if (key === 'play_quiz') {
+      navigation.navigate('PlayQuiz');
+      return;
+    }
+
+    if (key === 'help') {
+      navigation.navigate('HelpCenter');
       return;
     }
 
     if (key === 'logout') {
-      dispatch(logout());
+      setShowLogoutPrompt(true);
     }
+  };
+
+  const confirmLogout = () => {
+    setShowLogoutPrompt(false);
+    dispatch(logout());
   };
 
   if (loading && categories.length === 0) {
@@ -150,12 +176,17 @@ export default function CategoriesScreen({ navigation }: any) {
           keyExtractor={(item) => item.id.toString()}
           numColumns={2}
           columnWrapperStyle={styles.columnWrap}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, { paddingBottom: bottomPadding }]}
           onScroll={onScroll}
           scrollEventThrottle={16}
-          showsVerticalScrollIndicator={false}
+          showsVerticalScrollIndicator
           nestedScrollEnabled
           keyboardShouldPersistTaps="handled"
+          bounces={Platform.OS === 'ios'}
+          alwaysBounceVertical={Platform.OS === 'ios'}
+          overScrollMode="always"
+          contentInsetAdjustmentBehavior="automatic"
+          persistentScrollbar={Platform.OS === 'android'}
           renderItem={({ item, index }) => {
             const active = index === 0;
             const iconName = categoryIcons[index % categoryIcons.length];
@@ -239,13 +270,13 @@ export default function CategoriesScreen({ navigation }: any) {
                     <Ionicons name="albums-outline" size={16} color="#111827" />
                   </View>
                   <View>
-                    <Text style={styles.drawerStatLabel}>Quizio Coin Earned</Text>
-                    <Text style={styles.drawerStatValue}>20</Text>
+                    <Text style={styles.drawerStatLabel}>Active</Text>
+                    <Text style={styles.drawerStatValue}>Daily Pack</Text>
                   </View>
                 </View>
               </View>
 
-              <Text style={styles.drawerCurrentMonth}>* Current Month</Text>
+              <Text style={styles.drawerCurrentMonth}>Renewal Date: 2026-10-15</Text>
             </LinearGradient>
 
             <TouchableOpacity style={styles.drawerUpgradeRow}>
@@ -262,6 +293,15 @@ export default function CategoriesScreen({ navigation }: any) {
               data={drawerItems}
               keyExtractor={(item) => item.key}
               style={styles.drawerList}
+              contentContainerStyle={styles.drawerListContent}
+              showsVerticalScrollIndicator
+              nestedScrollEnabled
+              keyboardShouldPersistTaps="handled"
+              bounces={Platform.OS === 'ios'}
+              alwaysBounceVertical={Platform.OS === 'ios'}
+              overScrollMode="always"
+              contentInsetAdjustmentBehavior="automatic"
+              persistentScrollbar={Platform.OS === 'android'}
               renderItem={({ item }) => (
                 <TouchableOpacity style={styles.drawerMenuRow} onPress={() => handleDrawerItem(item.key)}>
                   <View style={styles.drawerMenuLeft}>
@@ -275,14 +315,27 @@ export default function CategoriesScreen({ navigation }: any) {
                 </TouchableOpacity>
               )}
             />
+          </View>
+        </View>
+      )}
 
-            <View style={styles.drawerFooter}>
-              <Text style={styles.drawerFooterText}>Rate this App</Text>
-              <View style={styles.drawerStarsRow}>
-                <Ionicons name="star-outline" size={22} color="#facc15" />
-                <Ionicons name="star" size={22} color="#facc15" />
-                <Ionicons name="star" size={22} color="#facc15" />
-              </View>
+      {showLogoutPrompt && (
+        <View style={styles.logoutOverlay}>
+          <TouchableOpacity style={styles.logoutOverlayTouch} onPress={() => setShowLogoutPrompt(false)} />
+
+          <View style={styles.logoutSheet}>
+            <Text style={styles.logoutTitle}>Log Out</Text>
+            <View style={styles.logoutDivider} />
+            <Text style={styles.logoutMessage}>Are you sure you want to log out?</Text>
+
+            <View style={styles.logoutButtonsRow}>
+              <TouchableOpacity style={styles.logoutCancelButton} onPress={() => setShowLogoutPrompt(false)}>
+                <Text style={styles.logoutCancelText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.logoutConfirmButton} onPress={confirmLogout}>
+                <Text style={styles.logoutConfirmText}>Yes, Logout</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -348,7 +401,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: 16,
-    paddingBottom: 120,
+    flexGrow: 1,
   },
   columnWrap: {
     justifyContent: 'space-between',
@@ -508,7 +561,7 @@ const styles = StyleSheet.create({
   },
   drawerStatValue: {
     color: '#ffffff',
-    fontSize: 38 / 2,
+    fontSize: 30 / 2,
     fontWeight: '800',
   },
   drawerCurrentMonth: {
@@ -547,6 +600,9 @@ const styles = StyleSheet.create({
   drawerList: {
     flex: 1,
   },
+  drawerListContent: {
+    paddingBottom: Platform.OS === 'web' ? 16 : 28,
+  },
   drawerMenuRow: {
     minHeight: 66,
     borderBottomWidth: 1,
@@ -576,22 +632,83 @@ const styles = StyleSheet.create({
     fontSize: 36 / 2,
     fontWeight: '700',
   },
-  drawerFooter: {
-    minHeight: 64,
-    backgroundColor: '#ff7a14',
-    paddingHorizontal: 16,
+  logoutOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(6,8,16,0.82)',
+    justifyContent: 'flex-end',
+    zIndex: 9999,
+    elevation: 9999,
+  },
+  logoutOverlayTouch: {
+    flex: 1,
+  },
+  logoutSheet: {
+    backgroundColor: '#0e1015',
+    borderTopLeftRadius: 92,
+    borderTopRightRadius: 92,
+    paddingTop: 34,
+    paddingHorizontal: 22,
+    paddingBottom: Platform.OS === 'web' ? 26 : 122,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: -8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 22,
+    elevation: 20,
+  },
+  logoutTitle: {
+    color: '#ff7a14',
+    fontSize: 50 / 2,
+    fontWeight: '800',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  logoutDivider: {
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.32)',
+    borderStyle: 'dashed',
+    marginBottom: 22,
+    marginHorizontal: 4,
+  },
+  logoutMessage: {
+    color: '#f4f4f5',
+    fontSize: 40 / 2,
+    fontWeight: '500',
+    textAlign: 'center',
+    marginBottom: 26,
+  },
+  logoutButtonsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 10,
+    marginTop: 2,
   },
-  drawerFooterText: {
-    color: '#111827',
-    fontSize: 34 / 2,
-    fontWeight: '700',
-  },
-  drawerStarsRow: {
-    flexDirection: 'row',
+  logoutCancelButton: {
+    flex: 1,
+    minHeight: 58,
+    borderRadius: 29,
+    borderWidth: 1.2,
+    borderColor: '#81573a',
+    backgroundColor: '#2a1d17',
     alignItems: 'center',
-    gap: 4,
+    justifyContent: 'center',
+  },
+  logoutCancelText: {
+    color: '#ff7a14',
+    fontSize: 19 / 1.1,
+    fontWeight: '800',
+  },
+  logoutConfirmButton: {
+    flex: 1,
+    minHeight: 58,
+    borderRadius: 29,
+    backgroundColor: '#ff7a14',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoutConfirmText: {
+    color: '#12141a',
+    fontSize: 19 / 1.1,
+    fontWeight: '800',
   },
 });

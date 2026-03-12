@@ -239,8 +239,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   nextButton: {
-    width: 92,
-    height: 92,
+    width: 55,
+    height: 55,
     borderRadius: 46,
     overflow: 'hidden',
     alignItems: 'center',
@@ -252,8 +252,8 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   nextButtonWide: {
-    width: 196,
-    height: 80,
+    width: 160,
+    height: 55,
     borderRadius: 40,
     shadowColor: '#5b45f6',
     shadowOffset: { width: 0, height: 10 },

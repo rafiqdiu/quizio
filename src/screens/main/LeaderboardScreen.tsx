@@ -5,8 +5,8 @@ import {
   StyleSheet,
   ActivityIndicator,
   TouchableOpacity,
-  FlatList,
   Animated,
+  Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,29 +20,28 @@ type Period = 'today' | 'weekly' | 'all';
 type LeaderboardItem = {
   id: number;
   name: string;
+  gender?: 'male' | 'female' | null;
+  avatar?: string | null;
+  avatar_url?: string | null;
   total_score: number;
+  quizzes_completed?: number;
   rank: number;
 };
 
-const fallbackEntries: LeaderboardItem[] = [
-  { id: 1, name: 'Jhon', total_score: 180, rank: 1 },
-  { id: 2, name: 'FrostPhoenix', total_score: 160, rank: 2 },
-  { id: 3, name: 'StealthGamer', total_score: 144, rank: 3 },
-  { id: 4, name: 'CyberSorcerer', total_score: 140, rank: 4 },
-  { id: 5, name: 'ThunderJester', total_score: 132, rank: 5 },
-  { id: 6, name: 'Kevin Lee', total_score: 128, rank: 6 },
-];
+function getGenderIcon(gender?: string | null) {
+  if (gender === 'female') {
+    return 'female';
+  }
 
-function getInitials(name: string) {
-  const safe = String(name || '').trim();
-  if (!safe) {
-    return 'U';
+  if (gender === 'male') {
+    return 'male';
   }
-  const parts = safe.split(' ').filter(Boolean);
-  if (parts.length === 1) {
-    return parts[0].slice(0, 1).toUpperCase();
-  }
-  return `${parts[0].slice(0, 1)}${parts[1].slice(0, 1)}`.toUpperCase();
+
+  return 'person';
+}
+
+function getAvatarUri(item: LeaderboardItem): string | null {
+  return item.avatar_url || item.avatar || null;
 }
 
 export default function LeaderboardScreen({ navigation }: any) {
@@ -54,34 +53,18 @@ export default function LeaderboardScreen({ navigation }: any) {
     useScrollAnimation({ maxShift: 24, fadeDistance: 180 });
 
   useEffect(() => {
-    dispatch(fetchLeaderboard());
-  }, [dispatch]);
+    dispatch(fetchLeaderboard({ period, limit: 50 }));
+  }, [dispatch, period]);
 
-  const normalizedEntries = useMemo<LeaderboardItem[]>(() => {
-    const source = entries.length > 0 ? entries : fallbackEntries;
-    return [...source].sort((a, b) => a.rank - b.rank);
-  }, [entries]);
-
-  const rankedEntries = useMemo<LeaderboardItem[]>(() => {
-    if (period === 'all') {
-      return normalizedEntries;
-    }
-
-    if (period === 'weekly') {
-      return normalizedEntries.map((item) => ({
-        ...item,
-        total_score: Math.max(80, Math.floor(item.total_score * 0.85)),
-      }));
-    }
-
-    return normalizedEntries.map((item) => ({
-      ...item,
-      total_score: Math.max(60, Math.floor(item.total_score * 0.7)),
-    }));
-  }, [normalizedEntries, period]);
+  const rankedEntries = useMemo<LeaderboardItem[]>(
+    () => [...entries].sort((a, b) => a.rank - b.rank),
+    [entries]
+  );
 
   const topThreeByRank = rankedEntries.slice(0, 3);
-  const topForDisplay = [topThreeByRank[1], topThreeByRank[0], topThreeByRank[2]].filter(Boolean);
+  const topForDisplay = [topThreeByRank[1], topThreeByRank[0], topThreeByRank[2]].filter(
+    (item): item is LeaderboardItem => Boolean(item)
+  );
 
   if (loading && entries.length === 0) {
     return (
@@ -164,7 +147,15 @@ export default function LeaderboardScreen({ navigation }: any) {
 
                 <View style={[styles.podiumAvatarRing, center ? styles.podiumAvatarRingCenter : null]}>
                   <View style={styles.podiumAvatarInner}>
-                    <Text style={styles.podiumAvatarText}>{getInitials(item.name)}</Text>
+                    {getAvatarUri(item) ? (
+                      <Image source={{ uri: getAvatarUri(item)! }} style={styles.podiumAvatarImage} />
+                    ) : (
+                      <Ionicons
+                        name={getGenderIcon(item.gender) as any}
+                        size={center ? 30 : 26}
+                        color="#ffffff"
+                      />
+                    )}
                   </View>
                 </View>
 
@@ -194,6 +185,13 @@ export default function LeaderboardScreen({ navigation }: any) {
           showsVerticalScrollIndicator={false}
           nestedScrollEnabled
           keyboardShouldPersistTaps="handled"
+          ListEmptyComponent={
+            !loading ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyStateText}>No leaderboard data for this period.</Text>
+              </View>
+            ) : null
+          }
           renderItem={({ item, index }) => {
             const isTop = index === 0;
             return (
@@ -210,7 +208,15 @@ export default function LeaderboardScreen({ navigation }: any) {
                 <Text style={[styles.rowRank, isTop ? styles.rowRankTop : null]}>{item.rank}</Text>
 
                 <View style={styles.rowAvatar}>
-                  <Text style={styles.rowAvatarText}>{getInitials(item.name)}</Text>
+                  {getAvatarUri(item) ? (
+                    <Image source={{ uri: getAvatarUri(item)! }} style={styles.rowAvatarImage} />
+                  ) : (
+                    <Ionicons
+                      name={getGenderIcon(item.gender) as any}
+                      size={18}
+                      color={isTop ? '#ffffff' : '#4b5563'}
+                    />
+                  )}
                 </View>
 
                 <Text style={[styles.rowName, isTop ? styles.rowNameTop : null]} numberOfLines={1}>
@@ -353,11 +359,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#4b5563',
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
-  podiumAvatarText: {
-    color: '#ffffff',
-    fontSize: 22,
-    fontWeight: '800',
+  podiumAvatarImage: {
+    width: '100%',
+    height: '100%',
   },
   rankDot: {
     minWidth: 30,
@@ -405,6 +411,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 110,
   },
+  emptyState: {
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  emptyStateText: {
+    color: '#4b5563',
+    fontSize: 14,
+    fontWeight: '600',
+  },
   rowCard: {
     minHeight: 58,
     borderRadius: 16,
@@ -433,15 +448,15 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#4b5563',
+    backgroundColor: '#e5e7eb',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 10,
+    overflow: 'hidden',
   },
-  rowAvatarText: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontWeight: '700',
+  rowAvatarImage: {
+    width: '100%',
+    height: '100%',
   },
   rowName: {
     flex: 1,

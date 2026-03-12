@@ -37,6 +37,15 @@ interface QuizzesState {
   error: string | null;
 }
 
+function shuffleArray<T>(items: T[]): T[] {
+  const next = [...items];
+  for (let i = next.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [next[i], next[j]] = [next[j], next[i]];
+  }
+  return next;
+}
+
 const initialState: QuizzesState = {
   categories: [],
   currentQuizzes: [],
@@ -197,7 +206,7 @@ const quizzesSlice = createSlice({
       })
       .addCase(fetchQuizzesByCategory.fulfilled, (state, action) => {
         state.loading = false;
-        state.currentQuizzes = action.payload;
+        state.currentQuizzes = shuffleArray(Array.isArray(action.payload) ? action.payload : []);
       })
       .addCase(fetchQuizzesByCategory.rejected, (state, action) => {
         state.loading = false;
@@ -212,7 +221,12 @@ const quizzesSlice = createSlice({
       })
       .addCase(fetchQuiz.fulfilled, (state, action) => {
         state.loading = false;
-        state.currentQuiz = action.payload;
+        const quiz = action.payload;
+        const questionItems = Array.isArray(quiz?.questions) ? quiz.questions : [];
+        state.currentQuiz = {
+          ...quiz,
+          questions: shuffleArray(questionItems),
+        };
       })
       .addCase(fetchQuiz.rejected, (state, action) => {
         state.loading = false;
