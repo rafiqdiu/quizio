@@ -28,38 +28,43 @@ import ProfileScreen from '../screens/main/ProfileScreen';
 import HistoryScreen from '../screens/main/HistoryScreen';
 import HistoryDetailsScreen from '../screens/main/HistoryDetailsScreen';
 import DrawerItemScreen from '../screens/main/DrawerItemScreen';
+import CurrentContestsScreen from '../screens/main/CurrentContestsScreen';
+import BestPlayersScreen from '../screens/main/BestPlayersScreen';
+import UpcomingContestsScreen from '../screens/main/UpcomingContestsScreen';
+import QuizDetailsScreen from '../screens/main/QuizDetailsScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 const LEADERBOARD_HEADER_COLOR = '#5b45f6';
 
 function AppTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+  const visualMap: Record<string, { label: string; icon: keyof typeof Ionicons.glyphMap }> = {
+    CategoriesTab: { label: 'Home', icon: 'home-outline' },
+    Leaderboard: { label: 'Library', icon: 'grid-outline' },
+    History: { label: 'Share & Earn', icon: 'people-outline' },
+    Profile: { label: 'Chat', icon: 'chatbubble-outline' },
+  };
+
   return (
     <View style={tabBarStyles.wrap}>
       <LinearGradient
-        colors={['#6f5df7', '#5b45f6', '#4a2f99']}
+        colors={['#6f4dff', '#5c3ef1', '#4f34d8']}
         start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+        end={{ x: 1, y: 0.8 }}
         style={tabBarStyles.bar}
       >
         {state.routes.map((route, index) => {
           const isFocused = state.index === index;
           const { options } = descriptors[route.key];
-          const tabLabel =
+          const fallbackLabel =
             typeof options.tabBarLabel === 'string'
               ? options.tabBarLabel
               : typeof options.title === 'string'
               ? options.title
               : route.name;
-
-          const iconName =
-            route.name === 'CategoriesTab'
-              ? 'home-outline'
-              : route.name === 'Leaderboard'
-              ? 'trophy-outline'
-              : route.name === 'History'
-              ? 'time-outline'
-              : 'person-outline';
+          const mappedVisual = visualMap[route.name];
+          const tabLabel = mappedVisual?.label || fallbackLabel;
+          const iconName = mappedVisual?.icon || 'ellipse-outline';
 
           return (
             <TouchableOpacity
@@ -83,7 +88,7 @@ function AppTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
                 <Ionicons
                   name={iconName}
                   size={20}
-                  color={isFocused ? '#ffffff' : '#374151'}
+                  color="#ffffff"
                 />
               </View>
               <Text style={[tabBarStyles.tabText, isFocused ? tabBarStyles.tabTextActive : null]}>
@@ -148,9 +153,29 @@ function CategoriesNavigator() {
         options={{ headerShown: false }}
       />
       <Stack.Screen
+        name="QuizDetails"
+        component={QuizDetailsScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
         name="Results"
         component={ResultsScreen}
         options={{ title: 'Quiz Results', headerLeft: () => null }}
+      />
+      <Stack.Screen
+        name="CurrentContests"
+        component={CurrentContestsScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="BestPlayers"
+        component={BestPlayersScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="UpcomingContests"
+        component={UpcomingContestsScreen}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="Notification"
@@ -283,27 +308,27 @@ const tabBarStyles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    paddingHorizontal: 12,
-    paddingBottom: 10,
+    paddingHorizontal: 10,
+    paddingBottom: 8,
     backgroundColor: 'transparent',
   },
   bar: {
-    minHeight: 86,
-    borderRadius: 26,
+    minHeight: 94,
+    borderRadius: 30,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderColor: 'rgba(255, 255, 255, 0.22)',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-end',
     paddingHorizontal: 6,
-    paddingBottom: 8,
-    paddingTop: 12,
+    paddingBottom: 9,
+    paddingTop: 11,
     overflow: 'hidden',
     shadowColor: '#5b45f6',
     shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOpacity: 0.3,
+    shadowRadius: 14,
+    elevation: 9,
   },
   tabButton: {
     flex: 1,
@@ -311,30 +336,33 @@ const tabBarStyles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   iconCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#ffffff',
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#20145f',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.16)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 4,
   },
   iconCircleActive: {
     backgroundColor: '#ff7a14',
+    borderColor: '#ff7a14',
   },
   tabText: {
-    color: '#ddd6fe',
-    fontSize: 12,
+    color: '#20165a',
+    fontSize: 11.5,
     fontWeight: '600',
   },
   tabTextActive: {
-    color: '#ffffff',
-    fontWeight: '700',
+    color: '#20165a',
+    fontWeight: '800',
   },
 });
 
