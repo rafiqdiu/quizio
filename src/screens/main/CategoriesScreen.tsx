@@ -10,9 +10,10 @@ import {
   ScrollView,
   Image,
   Dimensions,
+  TextInput,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { useAppDispatch, useAppSelector } from '../../hooks/redux';
 import { logout } from '../../store/slices/authSlice';
 import { fetchHomeData } from '../../store/slices/homeSlice';
@@ -20,8 +21,9 @@ import { BestPlayerItem, ContestItem } from './homeTypes';
 import { getAvailableSpotsLabel, getContestCountdown } from './homeFormatters';
 
 type CategoryVisual = {
-  icon: string;
+  icon: keyof typeof Ionicons.glyphMap;
   color: string;
+  gradientColors: string[];
 };
 
 const drawerItems = [
@@ -34,10 +36,26 @@ const drawerItems = [
 ];
 
 const categoryVisuals: CategoryVisual[] = [
-  { icon: 'musical-notes-outline', color: '#9ff0b0' },
-  { icon: 'language-outline', color: '#9de9ff' },
-  { icon: 'calculator-outline', color: '#ffc0cb' },
-  { icon: 'film-outline', color: '#ffd189' },
+  {
+    icon: 'time-outline',
+    color: '#6dd5a8',
+    gradientColors: ['#6dd5a8', '#4ec59b', '#3eb890']
+  },
+  {
+    icon: 'language-outline',
+    color: '#7dc8ff',
+    gradientColors: ['#7dc8ff', '#5eb8f5', '#4aa8eb']
+  },
+  {
+    icon: 'grid-outline',
+    color: '#ffb1b1',
+    gradientColors: ['#ffb1b1', '#ffa0a0', '#ff9090']
+  },
+  {
+    icon: 'film-outline',
+    color: '#ffc966',
+    gradientColors: ['#ffc966', '#ffbb52', '#ffad3e']
+  },
 ];
 
 function getInitials(name: string) {
@@ -151,7 +169,7 @@ export default function CategoriesScreen({ navigation }: any) {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#122d59', '#102754', '#0c1f44']}
+        colors={['#1a2d5a', '#152649', '#101f3c']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
@@ -162,83 +180,83 @@ export default function CategoriesScreen({ navigation }: any) {
         showsVerticalScrollIndicator={false}
       >
         <LinearGradient
-          colors={['#6f4dff', '#5a3df2', '#5531f2']}
+          colors={['#6640f4', '#5e38ed', '#5630e8']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.hero}
         >
           <View style={styles.headerRow}>
-            <View style={styles.leftHeader}>
-              <TouchableOpacity style={styles.iconButton} onPress={() => setDrawerOpen(true)}>
-                <Ionicons name="menu-outline" size={24} color="#efeaff" />
-              </TouchableOpacity>
-              <Text style={styles.brandText}>Quizio</Text>
-            </View>
+            <TouchableOpacity style={styles.menuButton} onPress={() => setDrawerOpen(true)}>
+              <View style={styles.menuLine} />
+              <View style={styles.menuLine} />
+              <View style={styles.menuLine} />
+            </TouchableOpacity>
+
+            <Text style={styles.brandText}>Quizio</Text>
 
             <View style={styles.rightHeader}>
-              <TouchableOpacity style={styles.iconButtonMuted}>
-                <Ionicons name="notifications-outline" size={22} color="#efeaff" />
+              <TouchableOpacity style={styles.iconButtonCircle}>
+                <Ionicons name="notifications-outline" size={20} color="#ffffff" />
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.iconButtonMuted}
+                style={styles.iconButtonCircle}
                 onPress={() => navigation.getParent?.()?.navigate?.('Profile')}
               >
-                <Ionicons name="person-outline" size={21} color="#efeaff" />
+                <Ionicons name="person-outline" size={20} color="#ffffff" />
               </TouchableOpacity>
             </View>
           </View>
 
           <View style={styles.searchRow}>
-            <TouchableOpacity style={styles.searchField} activeOpacity={0.9}>
-              <Ionicons name="search-outline" size={22} color="#e6ddff" />
-              <Text style={styles.searchPlaceholder}>Search Contest</Text>
-            </TouchableOpacity>
+            <View style={styles.searchField}>
+              <Ionicons name="search-outline" size={20} color="#c8bdff" />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search Contest"
+                placeholderTextColor="#c8bdff"
+              />
+            </View>
 
             <TouchableOpacity style={styles.filterButton}>
-              <Ionicons name="options-outline" size={20} color="#efeaff" />
+              <Ionicons name="options-outline" size={20} color="#ffffff" />
             </TouchableOpacity>
           </View>
 
           <Text style={styles.sectionLead}>Browse By Category</Text>
         </LinearGradient>
 
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={[
-            styles.categoriesRow,
-            { paddingHorizontal: Math.max((screenWidth - 4 * 84) / 8, 10) },
-          ]}
-        >
-          {displayCategories.map((category, index) => {
-            const compactName = category.name.replace(/\s+Quiz$/i, ' Quiz');
+        <View style={styles.categoriesContainer}>
+          <View style={styles.categoriesRow}>
+            {displayCategories.map((category, index) => {
+              const compactName = category.name.replace(/\s+Quiz$/i, '');
 
-            return (
-              <TouchableOpacity
-                key={`${category.id}-${index}`}
-                style={styles.categoryItem}
-                onPress={() => handleCategoryPress(category)}
-              >
-                <View style={[styles.categoryCircle, { backgroundColor: category.visual.color }]}>
-                  <View style={styles.categoryInnerCircle}>
-                    {category.visual.icon === 'language-outline' ? (
-                      <MaterialCommunityIcons name="translate" size={26} color="#6f4dff" />
-                    ) : (
-                      <Ionicons name={category.visual.icon as any} size={26} color="#6f4dff" />
-                    )}
-                  </View>
-                </View>
-                <Text style={styles.categoryLabel} numberOfLines={2}>
-                  {compactName}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
+              return (
+                <TouchableOpacity
+                  key={`${category.id}-${index}`}
+                  style={styles.categoryItem}
+                  onPress={() => handleCategoryPress(category)}
+                >
+                  <LinearGradient
+                    colors={category.visual.gradientColors}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.categoryCircle}
+                  >
+                    <View style={styles.categoryInnerCircle}>
+                      <Ionicons name={category.visual.icon} size={32} color="#5630e8" />
+                    </View>
+                  </LinearGradient>
+                  <Text style={styles.categoryLabel}>{compactName}</Text>
+                  <Text style={styles.categoryLabel}>Quiz</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
 
         {loading && categories.length === 0 ? (
           <View style={styles.loadingWrap}>
-            <ActivityIndicator size="small" color="#ff861f" />
+            <ActivityIndicator size="small" color="#ff7a14" />
             <Text style={styles.loadingText}>Loading categories...</Text>
           </View>
         ) : null}
@@ -250,31 +268,35 @@ export default function CategoriesScreen({ navigation }: any) {
         ) : null}
 
         <View style={styles.bodyContent}>
-          <LinearGradient
-            colors={['#6f4dff', '#5d3bf0', '#4f2bd8']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.inviteCard}
-          >
-            <View>
-              <Text style={styles.inviteTitle}>Invite Friends</Text>
-              <Text style={styles.inviteAmount}>$80</Text>
-              <Text style={styles.inviteSub}>Earn Up To</Text>
-            </View>
-
-            <View style={styles.inviteArtWrap}>
-              <Ionicons name="cash-outline" size={26} color="#ff9d2f" style={styles.coinIcon} />
-              <View style={styles.inviteAvatarBig}>
-                <Ionicons name="person" size={44} color="#2f215a" />
+          <View style={styles.inviteCardContainer}>
+            <LinearGradient
+              colors={['#6640f4', '#5e38ed']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.inviteCard}
+            >
+              <View style={styles.inviteLeft}>
+                <Text style={styles.inviteTitle}>Invite Friends</Text>
+                <Text style={styles.inviteAmount}>$80</Text>
+                <Text style={styles.inviteSub}>Earn Up To</Text>
               </View>
-            </View>
-          </LinearGradient>
 
-          <View style={styles.shadowCard} />
+              <View style={styles.inviteRight}>
+                <View style={styles.inviteIconWrapper}>
+                  <Text style={styles.inviteIcon}>✏️</Text>
+                  <View style={styles.inviteAvatarBig}>
+                    <Ionicons name="person" size={60} color="#3a2b6f" />
+                  </View>
+                </View>
+              </View>
+            </LinearGradient>
+
+            <View style={styles.inviteShadow} />
+          </View>
 
           <View style={styles.sectionHeaderRow}>
             <View style={styles.sectionTitleWrap}>
-              <Ionicons name="trophy" size={22} color="#ff7a14" />
+              <Ionicons name="trophy" size={24} color="#ff7a14" />
               <Text style={styles.sectionTitle}>Current Contest</Text>
             </View>
             <TouchableOpacity onPress={() => navigation.navigate('CurrentContests')}>
@@ -296,13 +318,19 @@ export default function CategoriesScreen({ navigation }: any) {
                   return (
                     <>
                 <View style={styles.contestTopStrip}>
-                  <Text style={styles.contestTopText}>{countdown.label}</Text>
+                  <Text style={styles.contestTopText}>Starting In</Text>
                   <View style={styles.timerRow}>
-                    <Text style={styles.timerChip}>{countdown.hours}</Text>
+                    <View style={styles.timerBox}>
+                      <Text style={styles.timerText}>{countdown.hours}</Text>
+                    </View>
                     <Text style={styles.timerColon}>:</Text>
-                    <Text style={styles.timerChip}>{countdown.minutes}</Text>
+                    <View style={styles.timerBox}>
+                      <Text style={styles.timerText}>{countdown.minutes}</Text>
+                    </View>
                     <Text style={styles.timerColon}>:</Text>
-                    <Text style={styles.timerChip}>{countdown.seconds}</Text>
+                    <View style={styles.timerBox}>
+                      <Text style={styles.timerText}>{countdown.seconds}</Text>
+                    </View>
                   </View>
                   <Text style={styles.readInstruction}>Read Instruction</Text>
                 </View>
@@ -319,7 +347,7 @@ export default function CategoriesScreen({ navigation }: any) {
                   </View>
 
                   <TouchableOpacity style={styles.arrowCircle} onPress={() => openQuizDetails(item)}>
-                    <Ionicons name="arrow-forward" size={24} color="#1c154d" />
+                    <Ionicons name="arrow-forward" size={22} color="#0f0a2e" />
                   </TouchableOpacity>
                 </View>
 
@@ -360,7 +388,7 @@ export default function CategoriesScreen({ navigation }: any) {
 
           <View style={styles.sectionHeaderRow}>
             <View style={styles.sectionTitleWrap}>
-              <Ionicons name="trophy" size={22} color="#ff7a14" />
+              <Ionicons name="trophy" size={24} color="#ff7a14" />
               <Text style={styles.sectionTitle}>Best Players</Text>
             </View>
             <TouchableOpacity onPress={() => navigation.navigate('BestPlayers')}>
@@ -392,8 +420,11 @@ export default function CategoriesScreen({ navigation }: any) {
                     {getPlayerAvatarUri(item) ? (
                       <Image source={{ uri: getPlayerAvatarUri(item)! }} style={styles.playerAvatarImage} />
                     ) : (
-                      <Ionicons name={getPlayerIcon(item) as any} size={38} color="#ffffff" />
+                      <Ionicons name={getPlayerIcon(item) as any} size={50} color="#ffffff" />
                     )}
+                  </View>
+                  <View style={styles.diamondBadge}>
+                    <Ionicons name="diamond" size={14} color="#ffd700" />
                   </View>
                 </View>
 
@@ -414,7 +445,7 @@ export default function CategoriesScreen({ navigation }: any) {
 
           <View style={styles.sectionHeaderRow}>
             <View style={styles.sectionTitleWrap}>
-              <Ionicons name="trophy" size={22} color="#ff7a14" />
+              <Ionicons name="trophy" size={24} color="#ff7a14" />
               <Text style={styles.sectionTitle}>Upcoming Contest</Text>
             </View>
             <TouchableOpacity onPress={() => navigation.navigate('UpcomingContests')}>
@@ -447,11 +478,17 @@ export default function CategoriesScreen({ navigation }: any) {
                   </View>
 
                   <View style={styles.timerRow}>
-                    <Text style={styles.timerChip}>{countdown.hours}</Text>
+                    <View style={styles.timerBox}>
+                      <Text style={styles.timerText}>{countdown.hours}</Text>
+                    </View>
                     <Text style={styles.timerColon}>:</Text>
-                    <Text style={styles.timerChip}>{countdown.minutes}</Text>
+                    <View style={styles.timerBox}>
+                      <Text style={styles.timerText}>{countdown.minutes}</Text>
+                    </View>
                     <Text style={styles.timerColon}>:</Text>
-                    <Text style={styles.timerChip}>{countdown.seconds}</Text>
+                    <View style={styles.timerBox}>
+                      <Text style={styles.timerText}>{countdown.seconds}</Text>
+                    </View>
                   </View>
                 </View>
 
@@ -476,7 +513,7 @@ export default function CategoriesScreen({ navigation }: any) {
                 <View style={styles.upcomingBottomRow}>
                   <View style={styles.prizeBlock}>
                     <View style={styles.prizeIconWrap}>
-                      <Ionicons name="trophy-outline" size={16} color="#1c154d" />
+                      <Ionicons name="trophy-outline" size={18} color="#0f0a2e" />
                     </View>
                     <View>
                       <Text style={styles.prizeLabel}>Price Pool</Text>
@@ -521,13 +558,13 @@ export default function CategoriesScreen({ navigation }: any) {
           <TouchableOpacity style={styles.drawerBackdrop} onPress={() => setDrawerOpen(false)} />
           <View style={styles.drawerPanel}>
             <LinearGradient
-              colors={['#6f4dff', '#5b45f6', '#4f39d8']}
+              colors={['#6640f4', '#5e38ed', '#5630e8']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.drawerTop}
             >
               <TouchableOpacity style={styles.drawerClose} onPress={() => setDrawerOpen(false)}>
-                <Ionicons name="close" size={20} color="#efeaff" />
+                <Ionicons name="close" size={20} color="#ffffff" />
               </TouchableOpacity>
 
               <View style={styles.drawerUserRow}>
@@ -547,7 +584,7 @@ export default function CategoriesScreen({ navigation }: any) {
               renderItem={({ item }) => (
                 <TouchableOpacity style={styles.drawerMenuRow} onPress={() => handleDrawerItem(item.key)}>
                   <View style={styles.drawerMenuLeft}>
-                    <Ionicons name={item.icon as any} size={20} color="#ff8620" />
+                    <Ionicons name={item.icon as any} size={20} color="#ff7a14" />
                     <Text style={styles.drawerMenuText}>{item.label}</Text>
                   </View>
                   <Ionicons name="chevron-forward" size={18} color="#8f95b2" />
@@ -583,206 +620,221 @@ export default function CategoriesScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f2450',
+    backgroundColor: '#1a2d5a',
   },
   scrollContent: {
     flexGrow: 1,
   },
   hero: {
-    paddingTop: 54,
-    paddingHorizontal: 16,
-    paddingBottom: 70,
-    borderBottomLeftRadius: 130,
-    borderBottomRightRadius: 130,
+    paddingTop: 48,
+    paddingHorizontal: 20,
+    paddingBottom: 28,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 28,
+    marginBottom: 20,
   },
-  leftHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
+  menuButton: {
+    width: 48,
+    height: 48,
+    justifyContent: 'center',
+    paddingLeft: 8,
+  },
+  menuLine: {
+    width: 24,
+    height: 3,
+    backgroundColor: '#ffffff',
+    borderRadius: 2,
+    marginBottom: 5,
+  },
+  brandText: {
+    color: '#ffffff',
+    fontSize: 28,
+    fontWeight: '700',
+    position: 'absolute',
+    left: '50%',
+    marginLeft: -40,
   },
   rightHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 12,
   },
-  iconButton: {
+  iconButtonCircle: {
     width: 42,
     height: 42,
     borderRadius: 21,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.28)',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.08)',
-  },
-  iconButtonMuted: {
-    width: 58 / 1.2,
-    height: 58 / 1.2,
-    borderRadius: 29 / 1.2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.14)',
+    backgroundColor: 'rgba(255,255,255,0.2)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.22)',
-  },
-  brandText: {
-    color: '#f6f2ff',
-    fontSize: 52 / 2,
-    fontWeight: '800',
+    borderColor: 'rgba(255,255,255,0.3)',
   },
   searchRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 28,
-    gap: 10,
+    marginBottom: 24,
+    gap: 12,
   },
   searchField: {
     flex: 1,
-    minHeight: 56,
-    borderRadius: 28,
+    height: 52,
+    borderRadius: 26,
     backgroundColor: 'rgba(255,255,255,0.2)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
-    gap: 10,
+    gap: 12,
   },
-  searchPlaceholder: {
-    color: '#efeaff',
-    fontSize: 34 / 2,
-    fontWeight: '500',
+  searchInput: {
+    flex: 1,
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '400',
   },
   filterButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.2)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
   },
   sectionLead: {
     textAlign: 'center',
-    color: '#f5f1ff',
-    fontSize: 42 / 2,
-    fontWeight: '800',
+    color: '#ffffff',
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 16,
+  },
+  categoriesContainer: {
+    marginTop: -40,
+    paddingHorizontal: 20,
   },
   categoriesRow: {
-    marginTop: -42,
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
   },
   categoryItem: {
-    width: 84,
+    width: '23%',
     alignItems: 'center',
-    marginRight: 14,
+    marginBottom: 12,
   },
   categoryCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    borderWidth: 2.5,
-    borderColor: '#dbe9ff',
-    justifyContent: 'center',
+    width: 76,
+    height: 76,
+    borderRadius: 38,
     alignItems: 'center',
-    marginBottom: 6,
+    justifyContent: 'center',
+    marginBottom: 8,
+    borderWidth: 3,
+    borderColor: '#ffffff',
   },
   categoryInnerCircle: {
-    width: 62,
-    height: 62,
-    borderRadius: 31,
-    backgroundColor: 'rgba(255,255,255,0.52)',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(255,255,255,0.85)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   categoryLabel: {
     textAlign: 'center',
-    color: '#f3f4f6',
+    color: '#ffffff',
     fontSize: 13,
     fontWeight: '600',
     lineHeight: 16,
   },
   loadingWrap: {
-    marginTop: 14,
+    marginTop: 20,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
   },
   loadingText: {
-    color: '#dce6ff',
+    color: '#ffffff',
     fontWeight: '600',
   },
   bodyContent: {
-    marginTop: 26,
-    paddingHorizontal: 16,
+    marginTop: 28,
+    paddingHorizontal: 20,
+  },
+  inviteCardContainer: {
+    marginBottom: 24,
   },
   inviteCard: {
-    minHeight: 160,
-    borderRadius: 24,
-    paddingHorizontal: 20,
-    paddingVertical: 18,
+    height: 140,
+    borderRadius: 20,
+    paddingHorizontal: 24,
+    paddingVertical: 20,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    zIndex: 2,
+  },
+  inviteLeft: {
+    flex: 1,
   },
   inviteTitle: {
-    color: '#fff5fb',
-    fontSize: 40 / 2,
-    fontWeight: '800',
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: '700',
     marginBottom: 8,
   },
   inviteAmount: {
-    color: '#fefefe',
-    fontSize: 76 / 2,
-    fontWeight: '800',
-    marginBottom: 6,
+    color: '#ffffff',
+    fontSize: 48,
+    fontWeight: '700',
+    marginBottom: 4,
   },
   inviteSub: {
-    color: '#efeaff',
-    fontSize: 38 / 2,
-    fontWeight: '700',
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
   },
-  inviteArtWrap: {
-    position: 'relative',
-    width: 140,
-    height: 120,
-    justifyContent: 'flex-end',
+  inviteRight: {
+    width: 120,
+    height: 100,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  coinIcon: {
-    position: 'absolute',
-    top: 8,
-    left: 8,
-  },
-  inviteAvatarBig: {
+  inviteIconWrapper: {
+    position: 'relative',
     width: 100,
     height: 100,
-    borderRadius: 50,
-    backgroundColor: '#ffb15e',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  shadowCard: {
-    marginTop: -4,
-    marginHorizontal: 10,
-    height: 26,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-    backgroundColor: 'rgba(84,61,199,0.55)',
-    marginBottom: 14,
+  inviteIcon: {
+    position: 'absolute',
+    top: -10,
+    right: 10,
+    fontSize: 28,
+  },
+  inviteAvatarBig: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: '#8b6be8',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  inviteShadow: {
+    height: 16,
+    marginHorizontal: 12,
+    marginTop: -10,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    backgroundColor: 'rgba(102,64,244,0.4)',
+    zIndex: 1,
   },
   sectionHeaderRow: {
-    marginTop: 18,
-    marginBottom: 12,
+    marginTop: 24,
+    marginBottom: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -793,139 +845,141 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   sectionTitle: {
-    color: '#f8fafc',
-    fontSize: 24 / 1.1,
-    fontWeight: '800',
+    color: '#ffffff',
+    fontSize: 20,
+    fontWeight: '700',
   },
   seeAll: {
-    color: '#ff8c2e',
-    fontSize: 34 / 2,
-    fontWeight: '800',
+    color: '#ff7a14',
+    fontSize: 16,
+    fontWeight: '600',
   },
   horizontalListContent: {
     paddingRight: 8,
-    gap: 12,
+    gap: 16,
   },
   contestCard: {
-    width: 324,
-    borderRadius: 22,
-    backgroundColor: '#24125d',
+    width: 340,
+    borderRadius: 16,
+    backgroundColor: '#2a1d5e',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
     overflow: 'hidden',
   },
   contestTopStrip: {
-    minHeight: 70,
-    backgroundColor: '#6e584f',
+    height: 56,
+    backgroundColor: '#6d5549',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    gap: 10,
+    paddingHorizontal: 16,
+    justifyContent: 'space-between',
   },
   contestTopText: {
-    color: '#f6f2ff',
-    fontSize: 20 / 1.1,
-    fontWeight: '700',
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '600',
   },
   timerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
   },
-  timerChip: {
-    minWidth: 34,
-    height: 34,
-    borderRadius: 9,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    color: '#f6f2ff',
-    textAlign: 'center',
-    textAlignVertical: 'center',
-    fontSize: 16 / 1.1,
+  timerBox: {
+    width: 30,
+    height: 30,
+    borderRadius: 6,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  timerText: {
+    color: '#ffffff',
+    fontSize: 14,
     fontWeight: '700',
-    paddingTop: 7,
   },
   timerColon: {
-    color: '#f6f2ff',
-    fontSize: 22 / 1.1,
-    fontWeight: '800',
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: '700',
   },
   readInstruction: {
-    color: '#ff982f',
-    fontSize: 16,
-    fontWeight: '700',
-    marginLeft: 'auto',
+    color: '#ff7a14',
+    fontSize: 13,
+    fontWeight: '600',
   },
   contestMainRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
-    gap: 10,
+    padding: 16,
+    gap: 12,
   },
   dateBadge: {
-    width: 84,
-    minHeight: 84,
-    borderRadius: 16,
+    width: 68,
+    height: 68,
+    borderRadius: 12,
     backgroundColor: '#ff7a14',
     alignItems: 'center',
     justifyContent: 'center',
   },
   dateBadgeDay: {
-    color: '#14151d',
-    fontSize: 30 / 2,
-    fontWeight: '800',
+    color: '#0f0a2e',
+    fontSize: 14,
+    fontWeight: '700',
   },
   dateBadgeTime: {
-    color: '#262633',
-    fontSize: 28 / 2,
+    color: '#1a1538',
+    fontSize: 12,
     fontWeight: '600',
   },
   contestMainInfo: {
     flex: 1,
   },
   contestName: {
-    color: '#f6f4ff',
-    fontSize: 20 / 1.1,
-    fontWeight: '800',
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '700',
     marginBottom: 4,
   },
   contestLang: {
-    color: '#f0ebff',
-    fontSize: 17,
+    color: '#c8bdff',
+    fontSize: 13,
     fontWeight: '500',
   },
   arrowCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: '#ff7a14',
     alignItems: 'center',
     justifyContent: 'center',
   },
   contestStatsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 14,
-    paddingBottom: 14,
+    justifyContent: 'space-around',
+    paddingHorizontal: 16,
+    paddingBottom: 16,
   },
   statLabel: {
-    color: '#f2eaff',
-    fontSize: 20 / 1.1,
+    color: '#c8bdff',
+    fontSize: 12,
     marginBottom: 4,
+    textAlign: 'center',
   },
   statValue: {
-    color: '#f8fafc',
-    fontSize: 20 / 1.1,
-    fontWeight: '800',
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '700',
+    textAlign: 'center',
   },
   bottomDivider: {
-    marginHorizontal: 14,
+    marginHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.24)',
+    borderBottomColor: 'rgba(255,255,255,0.15)',
     borderStyle: 'dashed',
   },
   contestFooterRow: {
-    paddingHorizontal: 14,
-    minHeight: 52,
+    paddingHorizontal: 16,
+    height: 52,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -933,25 +987,25 @@ const styles = StyleSheet.create({
   footerTagLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
   footerTagText: {
-    color: '#e7e2ff',
-    fontSize: 18 / 1.1,
+    color: '#c8bdff',
+    fontSize: 14,
     fontWeight: '500',
   },
   footerActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 16,
   },
   playerCard: {
-    width: 290,
-    borderRadius: 20,
-    backgroundColor: '#2a2a31',
+    width: 180,
+    borderRadius: 16,
+    backgroundColor: '#3d3b47',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.25)',
-    padding: 14,
+    borderColor: 'rgba(255,255,255,0.2)',
+    padding: 16,
     alignItems: 'center',
   },
   playerTopRow: {
@@ -959,99 +1013,106 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 14,
+    marginBottom: 16,
   },
   rankPill: {
-    minWidth: 100,
-    minHeight: 42,
-    borderRadius: 21,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255,146,64,0.5)',
+    borderColor: 'rgba(255,122,20,0.5)',
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 5,
+    gap: 4,
   },
   rankPillText: {
-    color: '#f7f7f9',
-    fontSize: 36 / 2,
-    fontWeight: '800',
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '700',
   },
   playerFlag: {
-    fontSize: 34 / 2,
+    fontSize: 20,
   },
   playerAvatarRing: {
-    width: 122,
-    height: 122,
-    borderRadius: 61,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     borderWidth: 3,
     borderColor: '#ff7a14',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
+    position: 'relative',
   },
   playerAvatarInner: {
-    width: 108,
-    height: 108,
-    borderRadius: 54,
-    backgroundColor: '#3d3b66',
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: '#4a4766',
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
-  },
-  playerAvatarText: {
-    fontSize: 54 / 2,
   },
   playerAvatarImage: {
     width: '100%',
     height: '100%',
   },
-  playerName: {
-    color: '#f6f5fb',
-    fontSize: 20 / 1.1,
-    fontWeight: '800',
-    marginBottom: 4,
-  },
-  playerXp: {
-    color: '#efedf9',
-    fontSize: 34 / 2,
-    marginBottom: 16,
-  },
-  followButton: {
-    minWidth: 118,
-    minHeight: 44,
-    borderRadius: 22,
-    backgroundColor: '#ff7a14',
+  diamondBadge: {
+    position: 'absolute',
+    bottom: -4,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#2a1d5e',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 12,
+    borderWidth: 2,
+    borderColor: '#ff7a14',
+  },
+  playerName: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  playerXp: {
+    color: '#c8bdff',
+    fontSize: 14,
+    marginBottom: 12,
+  },
+  followButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: '#ff7a14',
   },
   followingButton: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: 'rgba(255,146,64,0.5)',
+    borderColor: '#5e38ed',
   },
   followButtonText: {
-    color: '#15161f',
-    fontSize: 32 / 2,
+    color: '#0f0a2e',
+    fontSize: 14,
     fontWeight: '700',
   },
   followingButtonText: {
-    color: '#f3f4f8',
+    color: '#8b6be8',
   },
   upcomingCard: {
     width: 360,
-    borderRadius: 24,
-    backgroundColor: '#22145e',
+    borderRadius: 16,
+    backgroundColor: '#2a1d5e',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
-    padding: 14,
+    padding: 16,
   },
   upcomingTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginBottom: 14,
+    gap: 12,
+    marginBottom: 16,
   },
   upcomingMainInfo: {
     flex: 1,
@@ -1059,35 +1120,35 @@ const styles = StyleSheet.create({
   upcomingMetricsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   upcomingMetric: {
-    color: '#f3edff',
-    fontSize: 18 / 1.1,
+    color: '#c8bdff',
+    fontSize: 13,
     fontWeight: '500',
   },
   upcomingMetricBold: {
-    fontWeight: '800',
+    fontWeight: '700',
+    color: '#ffffff',
   },
   spotsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginBottom: 14,
+    gap: 12,
+    marginBottom: 16,
   },
   spotsText: {
-    color: '#f6f5ff',
-    fontSize: 18 / 1.1,
+    color: '#ffffff',
+    fontSize: 13,
   },
   progressTrack: {
     flex: 1,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: '#3b2a7f',
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#4a3d7f',
     overflow: 'hidden',
   },
   progressFill: {
-    width: '40%',
     height: '100%',
     backgroundColor: '#ff7a14',
   },
@@ -1095,7 +1156,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   prizeBlock: {
     flexDirection: 'row',
@@ -1103,59 +1164,57 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   prizeIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: '#ff7a14',
     alignItems: 'center',
     justifyContent: 'center',
   },
   prizeLabel: {
-    color: '#f6f1ff',
-    fontSize: 17,
+    color: '#c8bdff',
+    fontSize: 12,
   },
   prizeValue: {
     color: '#ffffff',
-    fontSize: 36 / 2,
-    fontWeight: '800',
+    fontSize: 16,
+    fontWeight: '700',
   },
   joinNowButton: {
-    minHeight: 44,
-    borderRadius: 22,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
     backgroundColor: '#ff7a14',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 16,
   },
   joinNowText: {
-    color: '#1b1a24',
-    fontSize: 34 / 2,
+    color: '#0f0a2e',
+    fontSize: 14,
     fontWeight: '700',
   },
   drawerOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(6,8,18,0.65)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     flexDirection: 'row',
   },
   drawerBackdrop: {
     flex: 1,
   },
   drawerPanel: {
-    width: '78%',
-    backgroundColor: '#111426',
+    width: '75%',
+    backgroundColor: '#0f0a2e',
   },
   drawerTop: {
-    paddingTop: 44,
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingTop: 50,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
   },
   drawerClose: {
     position: 'absolute',
-    right: 12,
-    top: 42,
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    right: 16,
+    top: 50,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
@@ -1164,36 +1223,36 @@ const styles = StyleSheet.create({
   drawerUserRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 12,
   },
   drawerAvatar: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: 'rgba(255,255,255,0.2)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   drawerAvatarText: {
     color: '#ffffff',
-    fontSize: 24 / 1.1,
-    fontWeight: '800',
+    fontSize: 20,
+    fontWeight: '700',
   },
   drawerName: {
     color: '#ffffff',
-    fontSize: 18,
-    fontWeight: '800',
-    marginBottom: 3,
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 4,
   },
   drawerSub: {
-    color: '#e8deff',
-    fontSize: 14,
+    color: '#c8bdff',
+    fontSize: 13,
   },
   drawerMenuRow: {
-    minHeight: 58,
+    height: 56,
     borderBottomWidth: 1,
-    borderBottomColor: '#1f2646',
-    paddingHorizontal: 14,
+    borderBottomColor: '#1f1a3c',
+    paddingHorizontal: 20,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -1201,70 +1260,70 @@ const styles = StyleSheet.create({
   drawerMenuLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 12,
   },
   drawerMenuText: {
-    color: '#f3f4fa',
-    fontSize: 17,
+    color: '#ffffff',
+    fontSize: 15,
     fontWeight: '600',
   },
   logoutOverlay: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.62)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
   },
   logoutBackdrop: {
     flex: 1,
   },
   logoutSheet: {
-    backgroundColor: '#13162a',
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    padding: 20,
-    paddingBottom: Platform.OS === 'web' ? 28 : 122,
+    backgroundColor: '#0f0a2e',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: Platform.OS === 'web' ? 32 : 120,
   },
   logoutTitle: {
     color: '#ff7a14',
-    fontSize: 24,
-    fontWeight: '800',
+    fontSize: 22,
+    fontWeight: '700',
     textAlign: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   logoutMessage: {
-    color: '#f5f5fb',
+    color: '#ffffff',
     textAlign: 'center',
-    marginBottom: 18,
-    fontSize: 17,
+    marginBottom: 24,
+    fontSize: 15,
   },
   logoutButtonsRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 12,
   },
   cancelButton: {
     flex: 1,
-    minHeight: 52,
-    borderRadius: 26,
+    height: 48,
+    borderRadius: 24,
     borderWidth: 1,
-    borderColor: '#8b6144',
+    borderColor: '#ff7a14',
     alignItems: 'center',
     justifyContent: 'center',
   },
   cancelButtonText: {
     color: '#ff7a14',
-    fontWeight: '700',
-    fontSize: 16,
+    fontWeight: '600',
+    fontSize: 15,
   },
   confirmButton: {
     flex: 1,
-    minHeight: 52,
-    borderRadius: 26,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: '#ff7a14',
     alignItems: 'center',
     justifyContent: 'center',
   },
   confirmButtonText: {
-    color: '#1a1a22',
-    fontWeight: '800',
-    fontSize: 16,
+    color: '#0f0a2e',
+    fontWeight: '700',
+    fontSize: 15,
   },
 });
